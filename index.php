@@ -283,8 +283,6 @@ $newJoinees = $obj->count(
             <?php include('components/footer.php'); ?>
 
 
-            
-
         </div>
 
 
