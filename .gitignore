@@ -1,0 +1,13 @@
+# Vendor/library assets (install via npm/composer instead)
+assets/js/ckeditor/
+assets/js/codemirror/
+assets/js/datatables/
+assets/js/fullcalendar/
+assets/js/icheck/
+assets/js/jvectormap/
+assets/js/rickshaw/
+assets/js/uikit/
+assets/css/font-icons/
+assets/frontend/js/gsap/
+assets/frontend/js/isotope/
+assets/frontend/js/nivo-lightbox/
