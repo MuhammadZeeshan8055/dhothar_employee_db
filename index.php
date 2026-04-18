@@ -178,9 +178,20 @@ $newJoinees = $obj->count(
 
             <!-- ===================== DATA TO JS ===================== -->
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <?php 
+            
+            $formatedLabels=[];
+
+            foreach($labels as $label){
+             
+                $formatedLabels[] = formatDate($label);
+
+            }
+
+            ?>
 
             <script>
-                const labels = <?= json_encode($labels) ?>;
+                const labels = <?= json_encode($formatedLabels) ?>;
                 const data = <?= json_encode($data) ?>;
 
                 const statusData = {

@@ -2,7 +2,11 @@
 
 session_start();
 
-$base_url = "http://localhost/dhothar_employee_db/";
+if ($_SERVER['HTTP_HOST'] == 'localhost') {
+    $base_url = "http://localhost/dhothar_employee_db/";
+} else {
+    $base_url = "https://dhotharinternational.com/dhothar_employee_db/index";
+}
 
 $userrole = 'Super Admin';
 
