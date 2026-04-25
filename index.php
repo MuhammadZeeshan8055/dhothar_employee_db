@@ -139,7 +139,7 @@ $newJoinees = $obj->count(
             /* =========================
                BAR CHART DATA (STATUS)
             ========================= */
-            $activeEmployees = $obj->count($table, "*", "passport_expiry_date >= CURDATE()");
+            $activeEmployees = $obj->count($table, "*", "status = 1");
             $expiredPassports = $obj->count($table, "*", "passport_expiry_date < CURDATE()");
             $expiredLicenses = $obj->count($table, "*", "license_expiry < CURDATE()");
             $newJoinees = $obj->count(

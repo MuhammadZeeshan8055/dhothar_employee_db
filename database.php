@@ -140,7 +140,7 @@ class Database
   }
 
   // Function to SELECT from the database
-  public function select($table, $rows = "*", $join = null, $where = null, $order = null, $limit = null, $group=null ,$debug = false)
+  public function select($table, $rows = "*", $join = null, $where = null, $order = null, $limit = null, $group = null, $debug = false)
   {
     // Check if table exists
     if ($this->tableExists($table)) {
@@ -157,10 +157,10 @@ class Database
       if ($where != null) {
         $sql .= " WHERE $where";
       }
-      
+
       if ($group != null) {
         $sql .= " GROUP BY $group";
-    }
+      }
       if ($order != null) {
         $sql .= " ORDER BY $order";
       }

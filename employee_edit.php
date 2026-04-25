@@ -17,9 +17,7 @@ if (isset($_POST['update_employee'])) {
 
     $id = $_POST['id'];
 
-    // =====================
     // PROFILE IMAGE HANDLE
-    // =====================
     $profile_pic = $_POST['old_profile_pic'] ?? "";
 
     if (!empty($_FILES['profile_pic']['name'])) {
@@ -33,12 +31,10 @@ if (isset($_POST['update_employee'])) {
         $base = preg_replace("/[^a-zA-Z0-9]/", "_", $base);
 
         $file_name = time() . "_" . $base . "." . $ext;
-
         $upload_path = $target_dir . $file_name;
 
         if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $upload_path)) {
 
-            // OPTIONAL: delete old image (clean storage)
             if (!empty($_POST['old_profile_pic'])) {
                 $old_path = $target_dir . $_POST['old_profile_pic'];
 
@@ -47,20 +43,26 @@ if (isset($_POST['update_employee'])) {
                 }
             }
 
-            // replace with new image
             $profile_pic = $file_name;
         }
     }
 
-    // =====================
-    // DATA ARRAY (FULL)
-    // =====================
+    // DATA ARRAY
     $data = array(
 
         "name" => $_POST['name'],
+        "company_name" => $_POST['company_name'],
         "designation" => $_POST['designation'],
+        "date_of_birth" => $_POST['date_of_birth'],
+
         "work_permit_date" => $_POST['work_permit_date'],
+        "work_permit_no" => $_POST['work_permit_no'],
         "date_joining" => $_POST['date_joining'],
+
+        "address" => $_POST['address'],
+        "type_of_contract" => $_POST['type_of_contract'],
+        "contract_no" => $_POST['contract_no'],
+
         "nationality" => $_POST['nationality'],
 
         "passport_no" => $_POST['passport_no'],
@@ -72,6 +74,7 @@ if (isset($_POST['update_employee'])) {
         "trc_expiry" => $_POST['trc_expiry'],
 
         "driving_license" => $_POST['driving_license'],
+        "driving_license_type" => $_POST['driving_license_type'],
         "license_issue_date" => $_POST['license_issue_date'],
         "license_expiry" => $_POST['license_expiry'],
 
@@ -81,17 +84,13 @@ if (isset($_POST['update_employee'])) {
         "iban" => $_POST['iban'],
         "bank_name" => $_POST['bank_name'],
 
+        "status" => $_POST['status'],
+
         "profile_pic" => $profile_pic
     );
 
-    // =====================
-    // UPDATE QUERY
-    // =====================
     $obj->update("add_employee_details", $data, "id=$id");
 
-    // =====================
-    // TOAST MESSAGE
-    // =====================
     $_SESSION['toast'] = [
         'type' => 'success',
         'message' => 'Employee updated successfully!'
@@ -199,7 +198,6 @@ if (isset($_POST['update_employee'])) {
                                                 object-fit: cover;
                                             }
                                         </style>
-
                                         <div class="col-md-1"></div>
 
                                         <div class="col-md-6">
@@ -210,6 +208,13 @@ if (isset($_POST['update_employee'])) {
                                                 <label class="control-label">Name</label>
                                                 <input type="text" name="name" class="form-control"
                                                     value="<?= $emp['name'] ?>" required>
+                                            </div>
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Company Name</label>
+                                                <input type="text" name="company_name" class="form-control"
+                                                    value="<?= $emp['company_name'] ?>">
                                             </div>
                                             <div class="clear"></div><br>
 
@@ -227,61 +232,104 @@ if (isset($_POST['update_employee'])) {
                                             </div>
 
                                             <div class="col-md-6">
+                                                <label class="control-label">Work Permit No</label>
+                                                <input type="text" name="work_permit_no" class="form-control"
+                                                    value="<?= $emp['work_permit_no'] ?>">
+                                            </div>
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Address</label>
+                                                <input type="text" name="address" class="form-control"
+                                                    value="<?= $emp['address'] ?>">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Date of Birth</label>
+                                                <input type="date" name="date_of_birth" class="form-control"
+                                                    value="<?= $emp['date_of_birth'] ?>">
+                                            </div>
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Type of Contract</label>
+                                                <select name="type_of_contract" class="form-control">
+                                                    <option value="">--Select Contract Type--</option>
+                                                    <option value="full_time" <?= ($emp['type_of_contract'] == 'full_time') ? 'selected' : '' ?>>Full Time</option>
+                                                    <option value="part_time" <?= ($emp['type_of_contract'] == 'part_time') ? 'selected' : '' ?>>Part Time</option>
+                                                    <option value="contract" <?= ($emp['type_of_contract'] == 'contract') ? 'selected' : '' ?>>Contract</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Contract No</label>
+                                                <input type="text" name="contract_no" class="form-control"
+                                                    value="<?= $emp['contract_no'] ?>">
+                                            </div>
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
                                                 <label class="control-label">Date of Joining</label>
                                                 <input type="date" name="date_joining" class="form-control"
                                                     value="<?= $emp['date_joining'] ?>">
                                             </div>
-                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Nationality</label>
                                                 <input type="text" name="nationality" class="form-control"
                                                     value="<?= $emp['nationality'] ?>">
                                             </div>
+                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Passport No</label>
                                                 <input type="text" name="passport_no" class="form-control"
                                                     value="<?= $emp['passport_no'] ?>">
                                             </div>
-                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Passport Issue Date</label>
                                                 <input type="date" name="passport_issue_date" class="form-control"
                                                     value="<?= $emp['passport_issue_date'] ?>">
                                             </div>
+                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Passport Expiry Date</label>
                                                 <input type="date" name="passport_expiry_date" class="form-control"
                                                     value="<?= $emp['passport_expiry_date'] ?>">
                                             </div>
-                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">TRC No</label>
                                                 <input type="text" name="trc_no" class="form-control"
                                                     value="<?= $emp['trc_no'] ?>">
                                             </div>
+                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">CNP</label>
                                                 <input type="text" name="cnp" class="form-control"
                                                     value="<?= $emp['cnp'] ?>">
                                             </div>
-                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">TRC Expiry</label>
                                                 <input type="date" name="trc_expiry" class="form-control"
                                                     value="<?= $emp['trc_expiry'] ?>">
                                             </div>
+                                            <div class="clear"></div><br>
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Driving License</label>
                                                 <input type="text" name="driving_license" class="form-control"
                                                     value="<?= $emp['driving_license'] ?>">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Driving License Type</label>
+                                                <input type="text" name="driving_license_type" class="form-control"
+                                                    value="<?= $emp['driving_license_type'] ?>">
                                             </div>
                                             <div class="clear"></div><br>
 
@@ -322,6 +370,18 @@ if (isset($_POST['update_employee'])) {
                                                 <input type="text" name="bank_name" class="form-control"
                                                     value="<?= $emp['bank_name'] ?>">
                                             </div>
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Status</label>
+                                                <select name="status" class="form-control">
+                                                    <option value="">--Select Status--</option>
+                                                    <option value="1" <?= ($emp['status'] == '1') ? 'selected' : '' ?>>
+                                                        Active</option>
+                                                    <option value="0" <?= ($emp['status'] == '0') ? 'selected' : '' ?>>
+                                                        Inactive</option>
+                                                </select>
+                                            </div>
 
                                         </div>
 
@@ -329,7 +389,7 @@ if (isset($_POST['update_employee'])) {
 
                                         <div class="col-md-12 text-center">
                                             <button type="submit" name="update_employee" class="btn btn-success">
-                                                Submit Details
+                                                Update Details
                                             </button>
                                         </div>
 

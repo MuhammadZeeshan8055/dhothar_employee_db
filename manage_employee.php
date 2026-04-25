@@ -8,46 +8,6 @@ $obj = new Database();
 $obj->select("add_employee_details", "*");
 $employees = $obj->getResult();
 
-if (isset($_GET['type']) && $_GET['type'] == 'delete') {
-
-    $id = $_GET['id'];
-
-    // Get employee first (for image delete)
-    $obj->select("add_employee_details", "*", null, "id = $id");
-    $emp = $obj->getResult();
-
-    if (!empty($emp)) {
-
-        $emp = $emp[0];
-
-        // Delete profile image if exists
-        if (!empty($emp['profile_pic'])) {
-            $img_path = "uploads/" . $emp['profile_pic'];
-
-            if (file_exists($img_path)) {
-                unlink($img_path);
-            }
-        }
-
-        // Delete record from DB
-        $obj->delete("add_employee_details", "id=$id");
-
-        $_SESSION['toast'] = [
-            'type' => 'success',
-            'message' => 'Employee deleted successfully!'
-        ];
-
-    } else {
-        $_SESSION['toast'] = [
-            'type' => 'error',
-            'message' => 'Employee not found!'
-        ];
-    }
-
-    header("Location: manage_employee.php");
-    exit;
-}
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,6 +31,46 @@ if (isset($_GET['type']) && $_GET['type'] == 'delete') {
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css" id="style-resource-5">
 
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
+
+    <style>
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ddd;
+            background: #f0f0f0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .4px;
+        }
+
+        .badge-inactive {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .badge-active {
+            background: #27ae60;
+            color: #fff;
+        }
+
+        .page-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+    </style>
+
 </head>
 
 <body class="">
@@ -88,6 +88,20 @@ if (isset($_GET['type']) && $_GET['type'] == 'delete') {
 
 
             <hr />
+
+            <div class="page-header-row">
+                <h3>
+                    <span class="entypo-users"></span>
+                    Manage Employees
+                    <small class="text-muted">((<?= count($employees); ?> total) total)</small>
+                </h3>
+                <a href="add_employee.php" class="btn btn-success btn-sm">
+                    <span class="entypo-plus-circled"></span> Add Employee
+                </a>
+            </div>
+
+            <hr />
+
 
             <h3>Exporting Table Data</h3>
             <br />
@@ -121,6 +135,7 @@ if (isset($_GET['type']) && $_GET['type'] == 'delete') {
                         <th>Net Salary</th>
                         <th>Date Joining</th>
                         <th>Profile Pic</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -162,25 +177,39 @@ if (isset($_GET['type']) && $_GET['type'] == 'delete') {
                                 <?php echo formatDate($emp['date_joining']); ?>
                             </td>
 
-                            <td>
+                            <td style="text-align: center;">
                                 <?php if (!empty($emp['profile_pic'])) { ?>
-                                    <img src="<?= $base_url ?>uploads/<?php echo $emp['profile_pic']; ?>" width="50" height="50"
-                                        style="border-radius:50%;">
+                                    <img src="<?= $base_url ?>uploads/<?php echo $emp['profile_pic']; ?>" class="avatar"
+                                        loading="lazy" decoding="async" width="50" height="50" style="border-radius:50%;">
                                 <?php } else { ?>
                                     <img src="https://via.placeholder.com/50" width="50" height="50" style="border-radius:50%;">
                                 <?php } ?>
                             </td>
 
                             <td>
+                                <?php if ($emp['status'] == 1): ?>
+                                    <span class="badge badge-active">Active</span>
+                                <?php else: ?>
+                                    <span class="badge badge-inactive">Inactive</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
                                 <div style="display:flex; gap:10px;">
                                     <a href="employee_edit?id=<?php echo $emp['id']; ?>"
                                         class="btn btn-primary btn-sm edit-btn">
+                                        <span class="entypo-pencil"></span>
                                         Edit
                                     </a>
-                                    <a href="manage_employee?id=<?php echo $emp['id']; ?>&type=delete"
+                                    <!-- <a href="manage_employee?id=<?php echo $emp['id']; ?>&type=delete"
                                         class="btn btn-danger btn-sm delete-btn">
+                                        <span class="entypo-trash"></span>
                                         Delete
-                                    </a>
+                                    </a> -->
+                                    <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $emp['id']; ?>">
+                                        <span class="entypo-trash"></span>
+                                        Delete
+                                    </button>
                                 </div>
 
                             </td>
@@ -244,21 +273,50 @@ if (isset($_GET['type']) && $_GET['type'] == 'delete') {
 
 
     <script>
+        $(document).ready(function () {
+
+            $(document).on('click', '.delete-btn', function () {
+
+                let id = $(this).data('id');
+                let row = $(this).closest('tr');
+
+                if (confirm("Are you sure you want to delete this employee?")) {
+
+                    $.ajax({
+                        url: 'ajax/delete_employee',
+                        type: 'POST',
+                        data: {
+                            id: id
+                        },
+                        success: function (response) {
+
+                            if (response == 'success') {
+                                row.fadeOut(500, function () {
+                                    $(this).remove();
+                                });
+
+                                toastr.success("Employee deleted successfully!");
+                            } else {
+                                toastr.error("Delete failed!");
+                            }
+                        }
+                    });
+
+                }
+
+            });
+
+        });
+    </script>
+
+    <script>
         function previewImg(e) {
             const img = document.getElementById('preview');
             img.src = URL.createObjectURL(e.target.files[0]);
             img.style.display = 'block';
         }
     </script>
-    <script>
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                if (!confirm("Are you sure you want to delete this employee?")) {
-                    e.preventDefault();
-                }
-            });
-        });
-    </script>
+    
 </body>
 
 </html>

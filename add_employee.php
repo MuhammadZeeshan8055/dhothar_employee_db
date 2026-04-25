@@ -37,11 +37,18 @@ if (isset($_POST['add_employee'])) {
     // Prepare data array
     $data = array(
         "name" => $_POST['name'],
+        "company_name" => $_POST['company_name'],
         "designation" => $_POST['designation'],
         "nationality" => $_POST['nationality'],
+        "date_of_birth" => $_POST['date_of_birth'],
 
         "work_permit_date" => $_POST['work_permit_date'],
+        "work_permit_no" => $_POST['work_permit_no'],
         "date_joining" => $_POST['date_joining'],
+
+        "address" => $_POST['address'],
+        "type_of_contract" => $_POST['type_of_contract'],
+        "contract_no" => $_POST['contract_no'],
 
         "passport_no" => $_POST['passport_no'],
         "passport_issue_date" => $_POST['passport_issue_date'],
@@ -52,6 +59,7 @@ if (isset($_POST['add_employee'])) {
         "trc_expiry" => $_POST['trc_expiry'],
 
         "driving_license" => $_POST['driving_license'],
+        "driving_license_type" => $_POST['driving_license_type'],
         "license_issue_date" => $_POST['license_issue_date'],
         "license_expiry" => $_POST['license_expiry'],
 
@@ -60,6 +68,8 @@ if (isset($_POST['add_employee'])) {
 
         "iban" => $_POST['iban'],
         "bank_name" => $_POST['bank_name'],
+
+        "status" => $_POST['status'],
 
         "profile_pic" => $profile_pic
     );
@@ -190,6 +200,14 @@ if (isset($_POST['add_employee'])) {
                                             </div>
                                             <div class="clear"></div><br>
 
+                                            <div class="col-md-6">
+                                                <label class="control-label">Company name</label>
+                                                <input type="text" name="company_name" class="form-control"
+                                                    placeholder="Enter Company name">
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
                                             <div class="col-md-12">
                                                 <label class="control-label">Designation</label>
                                                 <input type="text" name="designation" class="form-control"
@@ -200,6 +218,47 @@ if (isset($_POST['add_employee'])) {
                                             <div class="col-md-6">
                                                 <label class="control-label">Work Permit Date</label>
                                                 <input type="date" name="work_permit_date" class="form-control">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Work permit no</label>
+                                                <input type="text" name="work_permit_no" class="form-control"
+                                                    placeholder="Enter work permit number">
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Address: </label>
+                                                <input type="text" name="address" class="form-control"
+                                                    placeholder="Enter address">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Date of Birth</label>
+                                                <input type="date" name="date_of_birth" class="form-control">
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Type of Contract: </label>
+                                                <select name="type_of_contract" id="" class="form-control">
+                                                    <option>--Select Contract Type--</option>
+                                                    <option value="full_time">Full Time</option>
+                                                    <option value="part_time">Part Time</option>
+                                                    <option value="contract">contract</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Contract no. </label>
+                                                <input type="text" name="contract_no" class="form-control"
+                                                    placeholder="Enter contract number">
                                             </div>
 
                                             <div class="col-md-6">
@@ -255,6 +314,12 @@ if (isset($_POST['add_employee'])) {
                                                 <input type="text" name="driving_license" class="form-control"
                                                     placeholder="Enter license number">
                                             </div>
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Driving License Type</label>
+                                                <input type="text" name="driving_license_type" class="form-control"
+                                                    placeholder="Enter license number">
+                                            </div>
                                             <div class="clear"></div><br>
 
                                             <div class="col-md-6">
@@ -291,6 +356,18 @@ if (isset($_POST['add_employee'])) {
                                                 <label class="control-label">Bank Name</label>
                                                 <input type="text" name="bank_name" class="form-control"
                                                     placeholder="e.g. HBL / Meezan Bank">
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
+
+                                            <div class="col-md-6">
+                                                <label class="control-label">Status: </label>
+                                                <select name="status" id="" class="form-control">
+                                                    <option>--Select Status--</option>
+                                                    <option value="1">Active</option>
+                                                    <option value="0">Inactive</option>
+                                                </select>
                                             </div>
 
                                         </div>
