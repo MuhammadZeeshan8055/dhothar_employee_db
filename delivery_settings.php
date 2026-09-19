@@ -82,8 +82,67 @@ $employees = $obj->getResult();
         id="style-resource-3">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/bootstrap.css" id="style-resource-4">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css" id="style-resource-5">
+    <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2.css">
+    <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2-bootstrap.css">
 
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
+
+    <style>
+        #employee_id + .select2-container,
+        #s2id_employee_id {
+            width: 100% !important;
+            display: block !important;
+        }
+
+        #s2id_employee_id .select2-choice,
+        #s2id_employee_id.select2-drop-above .select2-choice,
+        #s2id_employee_id.select2-container-active .select2-choice,
+        #s2id_employee_id.select2-dropdown-open .select2-choice {
+            height: 38px !important;
+            line-height: 36px !important;
+            padding-left: 12px !important;
+            border: 1px solid #ccc !important;
+            border-radius: 3px !important;
+            background: #fff !important;
+            background-color: #fff !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+        }
+
+        #s2id_employee_id .select2-choice .select2-chosen {
+            line-height: 36px !important;
+            color: #555 !important;
+            margin-right: 40px !important;
+        }
+
+        #s2id_employee_id .select2-choice .select2-arrow {
+            width: 28px !important;
+            border-left: none !important;
+            background: #fff !important;
+            background-image: none !important;
+            filter: none !important;
+        }
+
+        #s2id_employee_id .select2-choice .select2-arrow b {
+            background-color: transparent !important;
+            background-image: url('<?= $base_url ?>assets/js/select2/select2.png') !important;
+            background-repeat: no-repeat !important;
+            background-position: 2px 5px !important;
+        }
+
+        #s2id_employee_id.select2-allowclear .select2-choice .select2-chosen {
+            margin-right: 52px !important;
+        }
+
+        .select2-search input {
+            background: #fff !important;
+            background-image: none !important;
+            border: 1px solid #ccc !important;
+            box-shadow: none !important;
+            filter: none !important;
+        }
+    </style>
 </head>
 
 <body class="">
@@ -123,8 +182,10 @@ $employees = $obj->getResult();
 
                                             <div class="col-md-12">
                                                 <label class="control-label">Name - Company name</label>
-                                                <select name="employee_id" class="form-control" required>
-                                                    <option value="">--Select Employee--</option>
+                                                <select name="employee_id" id="employee_id" class="form-control select2"
+                                                    data-allow-clear="true" data-placeholder="Search employee..."
+                                                    required>
+                                                    <option value=""></option>
                                                     <?php
                                                     if (!empty($employees)) {
                                                         foreach ($employees as $emp) {
@@ -252,6 +313,7 @@ $employees = $obj->getResult();
     <script src="<?= $base_url ?>assets/js/resizeable.js" id="script-resource-5"></script>
     <script src="<?= $base_url ?>assets/js/neon-api.js" id="script-resource-6"></script>
     <script src="<?= $base_url ?>assets/js/cookies.min.js" id="script-resource-7"></script>
+    <script src="<?= $base_url ?>assets/js/select2/select2.min.js"></script>
     <script src="<?= $base_url ?>assets/js/jvectormap/jquery-jvectormap-1.2.2.min.js" id="script-resource-8"></script>
     <script src="<?= $base_url ?>assets/js/jvectormap/jquery-jvectormap-europe-merc-en.js"
         id="script-resource-9"></script>
@@ -261,11 +323,21 @@ $employees = $obj->getResult();
 
 
     <script>
-        function previewImg(e) {
-            const img = document.getElementById('preview');
-            img.src = URL.createObjectURL(e.target.files[0]);
-            img.style.display = 'block';
-        }
+        (function ($) {
+            $(document).ready(function () {
+                var $employee = $('#employee_id');
+                if ($.fn.select2) {
+                    if ($employee.data('select2')) {
+                        $employee.select2('destroy');
+                    }
+                    $employee.select2({
+                        allowClear: true,
+                        placeholder: 'Search employee...',
+                        width: '100%'
+                    });
+                }
+            });
+        })(jQuery);
     </script>
 </body>
 
