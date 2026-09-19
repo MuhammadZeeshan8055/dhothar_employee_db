@@ -23,7 +23,7 @@
         <?php if ($userrole == 'Super Admin'): ?>
 
             <!-- <li class="">
-                <a href="<?=$base_url?>index">
+                <a href="<?= $base_url ?>index">
                     <button class="btn btn-primary">SOFTWARE</button>
                 </a>
             </li> -->
@@ -58,7 +58,18 @@
                     </a>
                 </li>
 
-                
+                <li>
+                    <a href="delivery_settings">
+                        <span class="title">Employee Rate Settings</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="delivery_earnings">
+                        <span class="title">Delivery Earnings</span>
+                    </a>
+                </li>
+    
             </ul>
         </li>
 

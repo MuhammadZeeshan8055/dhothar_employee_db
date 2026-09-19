@@ -85,6 +85,7 @@ if (isset($_POST['update_employee'])) {
         "bank_name" => $_POST['bank_name'],
 
         "status" => $_POST['status'],
+        "work_type" => $_POST['work_type'],
 
         "profile_pic" => $profile_pic
     );
@@ -159,8 +160,8 @@ if (isset($_POST['update_employee'])) {
 
                                             <div class="avatar-wrapper">
                                                 <img id="preview" src="<?= !empty($emp['profile_pic'])
-                                                    ? $base_url . 'uploads/' . $emp['profile_pic']
-                                                    : 'https://via.placeholder.com/120x120?text=Photo' ?>">
+                                                                            ? $base_url . 'uploads/' . $emp['profile_pic']
+                                                                            : 'https://via.placeholder.com/120x120?text=Photo' ?>">
 
                                                 <input type="hidden" name="old_profile_pic"
                                                     value="<?= $emp['profile_pic'] ?>">
@@ -213,8 +214,22 @@ if (isset($_POST['update_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Company Name</label>
-                                                <input type="text" name="company_name" class="form-control"
-                                                    value="<?= $emp['company_name'] ?>">
+                                                <select name="company_name" class="form-control" required>
+                                                    <option value="">--Select Company--</option>
+                                                    <?php
+                                                    $companies = [
+                                                        "RENT WITH ME S.R.L",
+                                                        "RENT WITH ME S.R.L.C",
+                                                        "DHOTHAR HR SERVICES S.R.L",
+                                                        "DHOTHAR INTERNATINOAL IMPEX S.R.L",
+                                                        "DIG LOGISTICS S.R.L"
+                                                    ];
+                                                    foreach ($companies as $c) {
+                                                        $selected = ($emp['company_name'] == $c) ? 'selected' : '';
+                                                        echo "<option value=\"" . htmlspecialchars($c) . "\" $selected>" . htmlspecialchars($c) . "</option>";
+                                                    }
+                                                    ?>
+                                                </select>
                                             </div>
                                             <div class="clear"></div><br>
 
@@ -383,6 +398,24 @@ if (isset($_POST['update_employee'])) {
                                                 </select>
                                             </div>
 
+                                            <div class="col-md-6">
+                                                <label class="control-label">Work Type</label>
+                                                <select name="work_type" class="form-control">
+                                                    <option value="">--Select Work type--</option>
+                                                    <?php
+                                                    $work_types = [
+                                                        'food_delivery' => 'Food Delivery',
+                                                        'ridesharing' => 'Ridesharing',
+                                                        'others' => 'Others',
+                                                    ];
+                                                    foreach ($work_types as $value => $label) {
+                                                        $selected = (($emp['work_type'] ?? '') === $value) ? 'selected' : '';
+                                                        echo '<option value="' . htmlspecialchars($value) . '" ' . $selected . '>' . htmlspecialchars($label) . '</option>';
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+
                                         </div>
 
                                         <div class="clear"></div><br>
@@ -425,7 +458,7 @@ if (isset($_POST['update_employee'])) {
 
             toastr["<?= $_SESSION['toast']['type'] ?>"]("<?= $_SESSION['toast']['message'] ?>");
         </script>
-        <?php unset($_SESSION['toast']);
+    <?php unset($_SESSION['toast']);
     } ?>
 
     <script src="<?= $base_url ?>assets/js/datatables/datatables.js" id="script-resource-8"></script>

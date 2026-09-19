@@ -70,6 +70,7 @@ if (isset($_POST['add_employee'])) {
         "bank_name" => $_POST['bank_name'],
 
         "status" => $_POST['status'],
+        "work_type" => $_POST['work_type'],
 
         "profile_pic" => $profile_pic
     );
@@ -202,8 +203,14 @@ if (isset($_POST['add_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Company name</label>
-                                                <input type="text" name="company_name" class="form-control"
-                                                    placeholder="Enter Company name">
+                                                <select name="company_name" class="form-control" required>
+                                                    <option value="">--Select Company--</option>
+                                                    <option value="RENT WITH ME S.R.L">RENT WITH ME S.R.L</option>
+                                                    <option value="RENT WITH ME S.R.L.C">RENT WITH ME S.R.L.C</option>
+                                                    <option value="DHOTHAR HR SERVICES S.R.L">DHOTHAR HR SERVICES S.R.L</option>
+                                                    <option value="DHOTHAR INTERNATINOAL IMPEX S.R.L">DHOTHAR INTERNATINOAL IMPEX S.R.L</option>
+                                                    <option value="DIG LOGISTICS S.R.L">DIG LOGISTICS S.R.L</option>
+                                                </select>
                                             </div>
 
                                             <div class="clear"></div><br>
@@ -370,6 +377,16 @@ if (isset($_POST['add_employee'])) {
                                                 </select>
                                             </div>
 
+                                            <div class="col-md-6">
+                                                <label class="control-label">Work Type: </label>
+                                                <select name="work_type" class="form-control">
+                                                    <option value="">--Select Work type--</option>
+                                                    <option value="food_delivery">Food Delivery</option>
+                                                    <option value="ridesharing">Ridesharing</option>
+                                                    <option value="others">Others</option>
+                                                </select>
+                                            </div>
+
                                         </div>
 
                                         <div class="clear"></div><br>
@@ -412,7 +429,7 @@ if (isset($_POST['add_employee'])) {
 
             toastr["<?= $_SESSION['toast']['type'] ?>"]("<?= $_SESSION['toast']['message'] ?>");
         </script>
-        <?php unset($_SESSION['toast']);
+    <?php unset($_SESSION['toast']);
     } ?>
 
     <script src="<?= $base_url ?>assets/js/datatables/datatables.js" id="script-resource-8"></script>
