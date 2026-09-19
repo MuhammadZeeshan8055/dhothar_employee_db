@@ -413,7 +413,7 @@ $earnings = $obj->getResult();
                         <th>App Tax</th>
                         <th>Total Earning</th>
                         <th>Tax</th>
-                        <th>SC</th>
+                        <th>SC Rent</th>
                         <th>Others</th>
                         <th>Total Balance</th>
                         <th>Date</th>
