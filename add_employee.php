@@ -70,7 +70,7 @@ if (isset($_POST['add_employee'])) {
         "bank_name" => $_POST['bank_name'],
 
         "status" => $_POST['status'],
-        "work_type" => $_POST['work_type'],
+        "work_type" => (($_POST['status'] ?? '') == '2') ? '' : ($_POST['work_type'] ?? ''),
 
         "profile_pic" => $profile_pic
     );
@@ -370,16 +370,17 @@ if (isset($_POST['add_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Status: </label>
-                                                <select name="status" id="" class="form-control">
-                                                    <option>--Select Status--</option>
+                                                <select name="status" id="status" class="form-control">
+                                                    <option value="">--Select Status--</option>
                                                     <option value="1">Active</option>
                                                     <option value="0">Inactive</option>
+                                                    <option value="2">Leave</option>
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6" id="work_type_wrap">
                                                 <label class="control-label">Work Type: </label>
-                                                <select name="work_type" class="form-control">
+                                                <select name="work_type" id="work_type" class="form-control">
                                                     <option value="">--Select Work type--</option>
                                                     <option value="food_delivery">Food Delivery</option>
                                                     <option value="ridesharing">Ridesharing</option>
@@ -459,6 +460,23 @@ if (isset($_POST['add_employee'])) {
             img.src = URL.createObjectURL(e.target.files[0]);
             img.style.display = 'block';
         }
+
+        (function ($) {
+            function toggleWorkType() {
+                var isLeave = $('#status').val() === '2';
+                if (isLeave) {
+                    $('#work_type_wrap').hide();
+                    $('#work_type').val('');
+                } else {
+                    $('#work_type_wrap').show();
+                }
+            }
+
+            $(document).ready(function () {
+                toggleWorkType();
+                $('#status').on('change', toggleWorkType);
+            });
+        })(jQuery);
     </script>
 </body>
 
