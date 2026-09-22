@@ -181,7 +181,7 @@ $employees = $obj->getResult();
                                         <div class="col-md-6">
 
                                             <div class="col-md-12">
-                                                <label class="control-label">Name - Company name</label>
+                                                <label class="control-label">Name - Company name - Type of Contract</label>
                                                 <select name="employee_id" id="employee_id" class="form-control select2"
                                                     data-allow-clear="true" data-placeholder="Search employee..."
                                                     required>
