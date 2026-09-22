@@ -219,7 +219,6 @@ if (isset($_POST['update_employee'])) {
                                                     <?php
                                                     $companies = [
                                                         "RENT WITH ME S.R.L",
-                                                        "RENT WITH ME S.R.L.C",
                                                         "DHOTHAR HR SERVICES S.R.L",
                                                         "DHOTHAR INTERNATINOAL IMPEX S.R.L",
                                                         "DIG LOGISTICS S.R.L"
