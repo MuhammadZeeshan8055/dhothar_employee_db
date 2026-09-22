@@ -124,7 +124,7 @@ $earningsWhere = $where ? implode(' AND ', $where) : null;
 
 $obj->select(
     'delivery_earnings',
-    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name',
+    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name,add_employee_details.type_of_contract',
     'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
     $earningsWhere,
     'delivery_earnings.week_year ASC, delivery_earnings.week_number ASC, delivery_earnings.id ASC'
@@ -194,7 +194,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                                                     <option value=""></option>
                                                     <?php foreach ($employees as $emp): ?>
                                                         <option value="<?= (int) $emp['id']; ?>">
-                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '')); ?>
+                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '')); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>

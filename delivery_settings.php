@@ -192,7 +192,8 @@ $employees = $obj->getResult();
                                                             $emp_id = htmlspecialchars($emp['id'] ?? '');
                                                             $empName = htmlspecialchars($emp['name'] ?? '');
                                                             $companyName = htmlspecialchars($emp['company_name'] ?? '');
-                                                            echo '<option value="' . $emp_id . '">' . $empName . ' - ' . $companyName . '</option>';
+                                                            $type_of_contract = htmlspecialchars($emp['type_of_contract'] ?? '');
+                                                            echo '<option value="' . $emp_id . '">' . $empName . ' - ' . $companyName . ' - ' . $type_of_contract . '</option>';
                                                         }
                                                     }
                                                     ?>
@@ -219,7 +220,7 @@ $employees = $obj->getResult();
                                             <div class="clear"></div><br>
 
                                             <div class="col-md-12">
-                                                <label class="control-label">Tax Rate</label>
+                                                <label class="control-label">Tax</label>
                                                 <div class="row">
                                                     <div class="col-md-8">
                                                         <input type="text" name="tax_rate" class="form-control"
@@ -227,7 +228,6 @@ $employees = $obj->getResult();
                                                     </div>
                                                     <div class="col-md-4">
                                                         <select name="tax_type" class="form-control">
-                                                            <option value="percentage">%</option>
                                                             <option value="fixed">Fixed</option>
                                                         </select>
                                                     </div>
@@ -237,7 +237,7 @@ $employees = $obj->getResult();
                                             <div class="clear"></div><br>
 
                                             <div class="col-md-12">
-                                                <label class="control-label">SC Rate</label>
+                                                <label class="control-label">Vehicle Rate</label>
                                                 <div class="row">
                                                     <div class="col-md-8">
                                                         <input type="text" name="sc_rate" class="form-control"
@@ -245,7 +245,6 @@ $employees = $obj->getResult();
                                                     </div>
                                                     <div class="col-md-4">
                                                         <select name="sc_type" class="form-control">
-                                                            <option value="percentage">%</option>
                                                             <option value="fixed">Fixed</option>
                                                         </select>
                                                     </div>
