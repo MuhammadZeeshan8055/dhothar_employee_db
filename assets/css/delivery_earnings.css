@@ -1,0 +1,145 @@
+/* Delivery earnings form */
+#earningForm .control-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+}
+
+#earningForm .form-control {
+    height: 38px;
+    box-shadow: none;
+}
+
+#earningForm .row {
+    margin-bottom: 4px;
+}
+
+#earningForm hr {
+    margin: 18px 0;
+    border-top: 1px solid #eee;
+}
+
+#earningForm .btn-success,
+#earningForm .btn-primary {
+    min-width: 160px;
+    padding: 8px 20px;
+}
+
+.calc-readonly {
+    background: #f7f7f7;
+    font-weight: 600;
+    color: #444;
+}
+
+.total-highlight {
+    background: #f0faf2 !important;
+    border-color: #cfe8d4;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.total-negative {
+    background: #fff5f5 !important;
+    border-color: #f5c2c2;
+    font-weight: 700;
+    color: #c62828;
+}
+
+.carry-alert {
+    display: none;
+    margin: 12px 0 4px;
+    padding: 10px 14px;
+    border-radius: 3px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    color: #8d6e00;
+    font-size: 13px;
+}
+
+.carry-alert.active {
+    display: block;
+}
+
+.carry-alert.edit-mode {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    color: #1565c0;
+}
+
+.rate-info {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Flat Select2 */
+#earningForm .select2-container,
+#s2id_employee_id {
+    width: 100% !important;
+    display: block !important;
+}
+
+#earningForm .select2-container .select2-choice,
+#s2id_employee_id .select2-choice,
+#earningForm .select2-container.select2-drop-above .select2-choice,
+#s2id_employee_id.select2-drop-above .select2-choice,
+#earningForm .select2-container.select2-container-active .select2-choice,
+#s2id_employee_id.select2-container-active .select2-choice,
+#earningForm .select2-container.select2-dropdown-open .select2-choice,
+#s2id_employee_id.select2-dropdown-open .select2-choice {
+    height: 38px !important;
+    line-height: 36px !important;
+    padding-left: 12px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 3px !important;
+    background: #fff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+#earningForm .select2-container .select2-choice .select2-chosen,
+#s2id_employee_id .select2-choice .select2-chosen {
+    line-height: 36px !important;
+    color: #555 !important;
+    margin-right: 40px !important;
+}
+
+#earningForm .select2-container .select2-choice .select2-arrow,
+#s2id_employee_id .select2-choice .select2-arrow {
+    width: 28px !important;
+    border-left: none !important;
+    background: #fff !important;
+    background-image: none !important;
+    filter: none !important;
+}
+
+#earningForm .select2-container .select2-choice .select2-arrow b,
+#s2id_employee_id .select2-choice .select2-arrow b {
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: 2px 5px !important;
+}
+
+#earningForm .select2-container.select2-allowclear .select2-choice .select2-chosen,
+#s2id_employee_id.select2-allowclear .select2-choice .select2-chosen {
+    margin-right: 52px !important;
+}
+
+.select2-drop {
+    border-color: #ccc !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.select2-drop-active {
+    border-color: #66afe9 !important;
+}
+
+.select2-search input {
+    background: #fff !important;
+    background-image: none !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
