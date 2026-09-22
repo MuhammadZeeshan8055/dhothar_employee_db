@@ -61,6 +61,11 @@ $employees = $obj->getResult();
             color: #fff;
         }
 
+        .badge-leave {
+            background: #f39c12;
+            color: #fff;
+        }
+
         .page-header-row {
             display: flex;
             align-items: center;
@@ -189,6 +194,8 @@ $employees = $obj->getResult();
                             <td>
                                 <?php if ($emp['status'] == 1): ?>
                                     <span class="badge badge-active">Active</span>
+                                <?php elseif ($emp['status'] == 2): ?>
+                                    <span class="badge badge-leave">Leave</span>
                                 <?php else: ?>
                                     <span class="badge badge-inactive">Inactive</span>
                                 <?php endif; ?>

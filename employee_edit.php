@@ -85,7 +85,7 @@ if (isset($_POST['update_employee'])) {
         "bank_name" => $_POST['bank_name'],
 
         "status" => $_POST['status'],
-        "work_type" => $_POST['work_type'],
+        "work_type" => (($_POST['status'] ?? '') == '2') ? '' : ($_POST['work_type'] ?? ''),
 
         "profile_pic" => $profile_pic
     );
@@ -388,18 +388,20 @@ if (isset($_POST['update_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Status</label>
-                                                <select name="status" class="form-control">
+                                                <select name="status" id="status" class="form-control">
                                                     <option value="">--Select Status--</option>
                                                     <option value="1" <?= ($emp['status'] == '1') ? 'selected' : '' ?>>
                                                         Active</option>
                                                     <option value="0" <?= ($emp['status'] == '0') ? 'selected' : '' ?>>
                                                         Inactive</option>
+                                                    <option value="2" <?= ($emp['status'] == '2') ? 'selected' : '' ?>>
+                                                        Leave</option>
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6" id="work_type_wrap">
                                                 <label class="control-label">Work Type</label>
-                                                <select name="work_type" class="form-control">
+                                                <select name="work_type" id="work_type" class="form-control">
                                                     <option value="">--Select Work type--</option>
                                                     <?php
                                                     $work_types = [
@@ -487,6 +489,23 @@ if (isset($_POST['update_employee'])) {
             img.src = URL.createObjectURL(e.target.files[0]);
             img.style.display = 'block';
         }
+
+        (function ($) {
+            function toggleWorkType() {
+                var isLeave = $('#status').val() === '2';
+                if (isLeave) {
+                    $('#work_type_wrap').hide();
+                    $('#work_type').val('');
+                } else {
+                    $('#work_type_wrap').show();
+                }
+            }
+
+            $(document).ready(function () {
+                toggleWorkType();
+                $('#status').on('change', toggleWorkType);
+            });
+        })(jQuery);
     </script>
 </body>
 
