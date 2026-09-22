@@ -7,6 +7,22 @@ $obj = new Database();
 
 if (isset($_POST['add_employee'])) {
 
+    $passport_no = trim($_POST['passport_no'] ?? '');
+
+    // Unique passport check (server-side)
+    if ($passport_no !== '') {
+        $safe = addslashes($passport_no);
+        $exists = (int) $obj->count('add_employee_details', '*', "passport_no = '$safe'");
+        if ($exists > 0) {
+            $_SESSION['toast'] = [
+                'type' => 'error',
+                'message' => 'Passport number already exists.'
+            ];
+            header('Location: add_employee.php');
+            exit;
+        }
+    }
+
     // Handle image upload
     $profile_pic = "";
 
@@ -281,8 +297,9 @@ if (isset($_POST['add_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Passport No</label>
-                                                <input type="text" name="passport_no" class="form-control"
+                                                <input type="text" name="passport_no" id="passport_no" class="form-control"
                                                     placeholder="Enter passport number">
+                                                <small id="passport_no_msg" class="text-danger" style="display:none;"></small>
                                             </div>
                                             <div class="clear"></div><br>
 
@@ -471,9 +488,28 @@ if (isset($_POST['add_employee'])) {
                 }
             }
 
+            function checkPassport() {
+                var passport = $.trim($('#passport_no').val());
+                var $msg = $('#passport_no_msg');
+
+                if (!passport) {
+                    $msg.hide().text('');
+                    return;
+                }
+
+                $.getJSON('ajax/check_passport', { passport_no: passport }, function (res) {
+                    if (res.exists) {
+                        $msg.text(res.message || 'Passport number already exists.').show();
+                    } else {
+                        $msg.hide().text('');
+                    }
+                });
+            }
+
             $(document).ready(function () {
                 toggleWorkType();
                 $('#status').on('change', toggleWorkType);
+                $('#passport_no').on('blur', checkPassport);
             });
         })(jQuery);
     </script>

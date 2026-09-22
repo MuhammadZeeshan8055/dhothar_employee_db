@@ -16,6 +16,22 @@ if (isset($_GET['id'])) {
 if (isset($_POST['update_employee'])) {
 
     $id = $_POST['id'];
+    $passport_no = trim($_POST['passport_no'] ?? '');
+
+    // Unique passport check (allow same number on this employee)
+    if ($passport_no !== '') {
+        $safe = addslashes($passport_no);
+        $id = (int) $id;
+        $exists = (int) $obj->count('add_employee_details', '*', "passport_no = '$safe' AND id != $id");
+        if ($exists > 0) {
+            $_SESSION['toast'] = [
+                'type' => 'error',
+                'message' => 'Passport number already exists.'
+            ];
+            header('Location: employee_edit.php?id=' . $id);
+            exit;
+        }
+    }
 
     // PROFILE IMAGE HANDLE
     $profile_pic = $_POST['old_profile_pic'] ?? "";
@@ -297,8 +313,9 @@ if (isset($_POST['update_employee'])) {
 
                                             <div class="col-md-6">
                                                 <label class="control-label">Passport No</label>
-                                                <input type="text" name="passport_no" class="form-control"
-                                                    value="<?= $emp['passport_no'] ?>">
+                                                <input type="text" name="passport_no" id="passport_no" class="form-control"
+                                                    value="<?= htmlspecialchars($emp['passport_no'] ?? ''); ?>">
+                                                <small id="passport_no_msg" class="text-danger" style="display:none;"></small>
                                             </div>
 
                                             <div class="col-md-6">
@@ -501,9 +518,32 @@ if (isset($_POST['update_employee'])) {
                 }
             }
 
+            function checkPassport() {
+                var passport = $.trim($('#passport_no').val());
+                var $msg = $('#passport_no_msg');
+                var excludeId = $('input[name="id"]').val() || '';
+
+                if (!passport) {
+                    $msg.hide().text('');
+                    return;
+                }
+
+                $.getJSON('ajax/check_passport', {
+                    passport_no: passport,
+                    exclude_id: excludeId
+                }, function (res) {
+                    if (res.exists) {
+                        $msg.text(res.message || 'Passport number already exists.').show();
+                    } else {
+                        $msg.hide().text('');
+                    }
+                });
+            }
+
             $(document).ready(function () {
                 toggleWorkType();
                 $('#status').on('change', toggleWorkType);
+                $('#passport_no').on('blur', checkPassport);
             });
         })(jQuery);
     </script>
