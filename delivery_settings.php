@@ -22,6 +22,7 @@ if (isset($_POST['save_delivery_settings'])) {
         "tax_type" => $tax_type,
         "sc_rate" => number_format((float) ($_POST['sc_rate'] ?? 0), 2, '.', ''),
         "sc_type" => $sc_type,
+        "service_providers" => $_POST['service_providers'] ?? '',
         "updated_at" => date('Y-m-d H:i:s')
     );
 
@@ -88,7 +89,7 @@ $employees = $obj->getResult();
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
 
     <style>
-        #employee_id + .select2-container,
+        #employee_id+.select2-container,
         #s2id_employee_id {
             width: 100% !important;
             display: block !important;
@@ -167,7 +168,7 @@ $employees = $obj->getResult();
                     <div class="panel panel-primary" data-collapsed="0">
                         <div class="panel-heading">
                             <div class="panel-title">
-                            Employee Rate Settings
+                                Employee Rate Settings
                             </div>
                         </div>
                         <div class="panel-body">
@@ -175,7 +176,7 @@ $employees = $obj->getResult();
                                 <form action="delivery_settings" method="post">
 
                                     <div class="row">
-                                        
+
                                         <div class="col-md-1"></div>
 
                                         <div class="col-md-6">
@@ -220,6 +221,17 @@ $employees = $obj->getResult();
                                             <div class="clear"></div><br>
 
                                             <div class="col-md-12">
+                                                <label class="control-label">Service Providers</label>
+
+                                                <select name="service_providers" class="form-control">
+                                                    <option value="AML">AML</option>
+                                                    <option value="ARANCA">ARANCA</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="clear"></div><br>
+
+                                            <div class="col-md-12">
                                                 <label class="control-label">Tax</label>
                                                 <div class="row">
                                                     <div class="col-md-8">
@@ -250,6 +262,7 @@ $employees = $obj->getResult();
                                                     </div>
                                                 </div>
                                             </div>
+
 
                                             <div class="clear"></div><br>
 
@@ -322,8 +335,8 @@ $employees = $obj->getResult();
 
 
     <script>
-        (function ($) {
-            $(document).ready(function () {
+        (function($) {
+            $(document).ready(function() {
                 var $employee = $('#employee_id');
                 if ($.fn.select2) {
                     if ($employee.data('select2')) {

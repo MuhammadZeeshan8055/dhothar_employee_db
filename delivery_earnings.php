@@ -131,8 +131,9 @@ $earningsWhere = $where ? implode(' AND ', $where) : null;
 
 $obj->select(
     'delivery_earnings',
-    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name,add_employee_details.type_of_contract',
-    'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
+    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.type_of_contract, employee_rate_settings.service_providers',
+    'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id
+     LEFT JOIN employee_rate_settings ON employee_rate_settings.employee_id = delivery_earnings.employee_id',
     $earningsWhere,
     'delivery_earnings.week_year ASC, delivery_earnings.week_number ASC, delivery_earnings.id ASC'
 );
@@ -336,6 +337,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                         <th>S.no</th>
                         <th>Employee</th>
                         <th>Company</th>
+                        <th>Service Provider</th>
                         <th>Year</th>
                         <th>Week</th>
                         <th>Date Range</th>
@@ -371,6 +373,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                                 <td><?= $sno++; ?></td>
                                 <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['company_name'] ?? ''); ?></td>
+                                <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['week_year'] ?? ''); ?></td>
                                 <td><?= !empty($row['week_number']) ? 'Week ' . (int) $row['week_number'] : ''; ?></td>
                                 <td><?= htmlspecialchars($rangeLabel); ?></td>
