@@ -107,7 +107,14 @@ if (isset($_POST['save_delivery_earning'])) {
 // ---------------------------------------------------------------------------
 // PAGE DATA
 // ---------------------------------------------------------------------------
-$obj->select('add_employee_details', '*', null, "work_type = 'food_delivery'", 'name ASC');
+// Only food-delivery employees who already have rate settings
+$obj->select(
+    'add_employee_details',
+    'add_employee_details.*',
+    'INNER JOIN employee_rate_settings ON employee_rate_settings.employee_id = add_employee_details.id',
+    "add_employee_details.work_type = 'food_delivery'",
+    'add_employee_details.name ASC'
+);
 $employees = $obj->getResult();
 
 $filter_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : null;
