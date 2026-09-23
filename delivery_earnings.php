@@ -394,10 +394,18 @@ $form_range_label = week_range_label($current_start, $current_end);
                                 </td>
                                 <td><?= htmlspecialchars($row['adjustment_note'] ?? ''); ?></td>
                                 <td>
-                                    <button type="button" class="btn btn-danger btn-sm delete-earning-btn"
-                                        data-id="<?= (int) $row['id']; ?>">
-                                        <span class="entypo-trash"></span> Delete
-                                    </button>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-primary btn-sm edit-earning-btn"
+                                            data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
+                                            data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
+                                            data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
+                                            <span class="entypo-pencil"></span> Edit
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-earning-btn"
+                                            data-id="<?= (int) $row['id']; ?>">
+                                            <span class="entypo-trash"></span> Delete
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <?php

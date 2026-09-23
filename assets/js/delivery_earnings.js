@@ -270,6 +270,35 @@
 
         refreshDateRange();
 
+        // Load row into the form (same as picking employee + year + week)
+        $(document).on('click', '.edit-earning-btn', function () {
+            var employeeId = String($(this).data('employee-id') || '');
+            var year = String($(this).data('week-year') || '');
+            var week = String($(this).data('week-number') || '');
+
+            if (!employeeId || !year || !week) {
+                toastr.error('Cannot edit: missing employee or week data.');
+                return;
+            }
+
+            $('#week_year').val(year);
+            rebuildWeeks(year, week);
+            $('#week_number').val(week);
+            refreshDateRange();
+
+            var $employee = $('#employee_id');
+            $employee.val(employeeId);
+            if ($employee.data('select2')) {
+                $employee.select2('val', employeeId);
+            }
+
+            loadRates(employeeId);
+
+            $('html, body').animate({
+                scrollTop: $('#earningForm').offset().top - 20
+            }, 300);
+        });
+
         $(document).on('click', '.delete-earning-btn', function () {
             var id = $(this).data('id');
             var $row = $(this).closest('tr');
