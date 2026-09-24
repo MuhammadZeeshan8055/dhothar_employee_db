@@ -274,7 +274,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="control-label">Others</label>
-                                                <input type="number" step="0.01" min="0" name="others" id="others"
+                                                <input type="number" step="0.01" name="others" id="others"
                                                     class="form-control calc-input" value="0">
                                             </div>
                                             <div class="col-md-2">
@@ -452,25 +452,43 @@ $form_range_label = week_range_label($current_start, $current_end);
 
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
+            // Export amounts as real numbers (not "2,005.69" text) so Excel formulas work
+            function exportCell(data) {
+                var text = $('<div>').html(data == null ? '' : data).text().replace(/\s+/g, ' ').trim();
+                if (text === '') {
+                    return '';
+                }
+                var cleaned = text.replace(/,/g, '');
+                if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
+                    return parseFloat(cleaned);
+                }
+                return text;
+            }
+
+            var exportOpts = {
+                columns: ':not(:last-child)',
+                format: { body: exportCell }
+            };
+
             var $table4 = jQuery("#table-4");
             $table4.DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     {
                         extend: 'copyHtml5',
-                        exportOptions: { columns: ':not(:last-child)' }
+                        exportOptions: exportOpts
                     },
                     {
                         extend: 'excelHtml5',
-                        exportOptions: { columns: ':not(:last-child)' }
+                        exportOptions: exportOpts
                     },
                     {
                         extend: 'csvHtml5',
-                        exportOptions: { columns: ':not(:last-child)' }
+                        exportOptions: exportOpts
                     },
                     {
                         extend: 'pdfHtml5',
-                        exportOptions: { columns: ':not(:last-child)' }
+                        exportOptions: exportOpts
                     }
                 ],
                 order: [[0, 'asc']]
