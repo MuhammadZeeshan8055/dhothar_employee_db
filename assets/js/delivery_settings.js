@@ -212,6 +212,34 @@
 
         $('#settingsForm').on('input change', 'input, select', updateSummary);
 
+        $(document).on('click', '.edit-settings-btn', function () {
+            var employeeId = String($(this).data('employee-id') || '');
+            var year = String($(this).data('week-year') || '');
+            var week = String($(this).data('week-number') || '');
+
+            if (!employeeId || !year || !week) {
+                toastr.error('Cannot edit: missing employee or week data.');
+                return;
+            }
+
+            $('#week_year').val(year);
+            rebuildWeeks(year, week);
+            $('#week_number').val(week);
+            refreshDateRange();
+
+            var $employee = $('#employee_id');
+            $employee.val(employeeId);
+            if ($employee.data('select2')) {
+                $employee.select2('val', employeeId);
+            }
+
+            loadWeekSettings();
+
+            $('html, body').animate({
+                scrollTop: $('#settingsForm').offset().top - 20
+            }, 300);
+        });
+
         refreshDateRange();
     });
 })(jQuery);

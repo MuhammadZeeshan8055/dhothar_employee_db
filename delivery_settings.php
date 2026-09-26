@@ -73,14 +73,30 @@ $employees = $obj->getResult();
 
 $form_range_label = week_range_label($current_start, $current_end);
 
-$summary_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : $current_year;
-$summary_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : $current_week;
+$default_filter_year = $current_year;
+$default_filter_week = $current_week - 1;
+if ($default_filter_week < 1) {
+    $default_filter_year = $current_year - 1;
+    $default_filter_week = iso_weeks_in_year($default_filter_year);
+}
+
+$filter_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : $default_filter_year;
+$filter_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : $default_filter_week;
+
+$obj->select(
+    'employee_rate_settings',
+    'employee_rate_settings.*, add_employee_details.name, add_employee_details.company_name',
+    'LEFT JOIN add_employee_details ON add_employee_details.id = employee_rate_settings.employee_id',
+    "employee_rate_settings.week_year = {$filter_year} AND employee_rate_settings.week_number = {$filter_week}",
+    'add_employee_details.name ASC, employee_rate_settings.id ASC'
+);
+$savedSettings = $obj->getResult() ?: [];
 
 $obj->select(
     'delivery_earnings',
     'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name',
     'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
-    "delivery_earnings.week_year = {$summary_year} AND delivery_earnings.week_number = {$summary_week}",
+    "delivery_earnings.week_year = {$filter_year} AND delivery_earnings.week_number = {$filter_week}",
     'delivery_earnings.id ASC'
 );
 $earningsForSummary = enrich_earnings_with_vehicle($obj, $obj->getResult() ?: []);
@@ -157,6 +173,23 @@ foreach ($rentByCompany as $group) {
             font-size: 13px;
             color: #555;
             line-height: 1.6;
+        }
+
+        .settings-list-wrap {
+            margin-top: 20px;
+        }
+
+        .settings-list-wrap .table {
+            font-size: 12px;
+        }
+
+        .settings-week-filter {
+            margin-bottom: 15px;
+        }
+
+        .settings-week-filter select {
+            min-width: 110px;
+            margin-right: 8px;
         }
     </style>
 </head>
@@ -326,10 +359,81 @@ foreach ($rentByCompany as $group) {
                                 </div>
                             </form>
 
+                            <div class="settings-list-wrap">
+                                <hr>
+                                <h4>Saved Rate Settings</h4>
+
+                                <form method="get" class="form-inline settings-week-filter">
+                                    <label class="control-label" style="margin-right:8px;">Week</label>
+                                    <select name="filter_year" class="form-control">
+                                        <?= year_options_html($filter_year, $current_year); ?>
+                                    </select>
+                                    <select name="filter_week" class="form-control">
+                                        <?= week_options_html($filter_week, $filter_year); ?>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Show</button>
+                                </form>
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-sm" id="settings-list-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Employee</th>
+                                                <th>Year</th>
+                                                <th>Week</th>
+                                                <th>Date Range</th>
+                                                <th>Commission</th>
+                                                <th>Service Provider</th>
+                                                <th>Tax</th>
+                                                <th>Vehicle Type</th>
+                                                <th>Vehicle Rate</th>
+                                                <th>Vehicle Company</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (empty($savedSettings)): ?>
+                                                <tr>
+                                                    <td colspan="12" class="text-center text-muted">
+                                                        No saved settings for Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?>.
+                                                    </td>
+                                                </tr>
+                                            <?php else: ?>
+                                                <?php $sno = 1; ?>
+                                                <?php foreach ($savedSettings as $row): ?>
+                                                    <tr>
+                                                        <td><?= $sno++; ?></td>
+                                                        <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
+                                                        <td><?= (int) ($row['week_year'] ?? 0); ?></td>
+                                                        <td><?= (int) ($row['week_number'] ?? 0); ?></td>
+                                                        <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
+                                                        <td><?= htmlspecialchars(rate_type_label($row['commission_rate'] ?? 0, $row['commission_type'] ?? 'percentage')); ?></td>
+                                                        <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
+                                                        <td><?= htmlspecialchars(rate_type_label($row['tax_rate'] ?? 0, $row['tax_type'] ?? 'fixed')); ?></td>
+                                                        <td><?= htmlspecialchars(vehicle_type_label($row['vehicle_type'] ?? '')); ?></td>
+                                                        <td><?= htmlspecialchars(rate_type_label($row['sc_rate'] ?? 0, $row['sc_type'] ?? 'fixed')); ?></td>
+                                                        <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-primary btn-sm edit-settings-btn"
+                                                                data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
+                                                                data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
+                                                                data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
+                                                                Edit
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <?php if (!empty($rentByCompany)): ?>
                                 <hr>
                                 <div class="rent-by-company-wrap">
-                                    <h4>Rent by Vehicle Company — Week <?= (int) $summary_week; ?> / <?= (int) $summary_year; ?></h4>
+                                    <h4>Rent by Vehicle Company — Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?></h4>
                                     <table class="table table-bordered table-sm" id="rent-by-company">
                                         <thead>
                                             <tr>
