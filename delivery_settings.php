@@ -315,6 +315,7 @@ foreach ($rentByCompany as $group) {
                                                     <option value="bicyle">Bicycle</option>
                                                     <option value="sc">Scooter</option>
                                                     <option value="car">Car</option>
+                                                    <option value="on_car">On Car</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-8">
@@ -340,6 +341,7 @@ foreach ($rentByCompany as $group) {
                                                     <option value="uny_mobility_srl">UNY MOBILITY SRL</option>
                                                     <option value="kiris_rent_srl">KIRIS RENT SRL</option>
                                                     <option value="rbj_brothers_srl">RBJ BROTHERS SRL</option>
+                                                    <option value="on_car">On Car</option>
                                                 </select>
                                             </div>
                                         </div>

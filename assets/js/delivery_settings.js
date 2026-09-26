@@ -212,6 +212,15 @@
 
         $('#settingsForm').on('input change', 'input, select', updateSummary);
 
+        $('#vehicle_type').on('change', function () {
+            if ($(this).val() === 'on_car') {
+                $('#vehicle_company_name').val('on_car');
+            } else if ($('#vehicle_company_name').val() === 'on_car') {
+                $('#vehicle_company_name').val('');
+            }
+            updateSummary();
+        });
+
         $(document).on('click', '.edit-settings-btn', function () {
             var employeeId = String($(this).data('employee-id') || '');
             var year = String($(this).data('week-year') || '');
