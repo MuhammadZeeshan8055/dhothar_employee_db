@@ -215,6 +215,8 @@
         $('#vehicle_type').on('change', function () {
             if ($(this).val() === 'on_car') {
                 $('#vehicle_company_name').val('on_car');
+                $('#sc_rate').val('0');
+                $('#sc_type').val('fixed');
             } else if ($('#vehicle_company_name').val() === 'on_car') {
                 $('#vehicle_company_name').val('');
             }
