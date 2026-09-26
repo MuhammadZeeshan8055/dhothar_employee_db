@@ -323,6 +323,12 @@ function rate_type_label($rate, $type)
     return $type === 'fixed' ? "Fixed {$rate}" : "{$rate}%";
 }
 
+/** Table/export-friendly number (no thousands comma). */
+function num_display($value)
+{
+    return number_format((float) $value, 2, '.', '');
+}
+
 function vehicle_type_label($value)
 {
     $map = [

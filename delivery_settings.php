@@ -394,13 +394,13 @@ foreach ($rentByCompany as $group) {
                                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= (int) ($row['week_year'] ?? 0); ?></td>
                                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= (int) ($row['week_number'] ?? 0); ?></td>
                                                 <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
-                                                <td data-order="<?= $commissionRate; ?>"><?= number_format($commissionRate, 2, '.', ''); ?></td>
+                                                <td data-order="<?= $commissionRate; ?>"><?= num_display($commissionRate); ?></td>
                                                 <td><?= htmlspecialchars($row['commission_type'] ?? 'percentage'); ?></td>
                                                 <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
-                                                <td data-order="<?= $taxRate; ?>"><?= number_format($taxRate, 2, '.', ''); ?></td>
+                                                <td data-order="<?= $taxRate; ?>"><?= num_display($taxRate); ?></td>
                                                 <td><?= htmlspecialchars($row['tax_type'] ?? 'fixed'); ?></td>
                                                 <td><?= htmlspecialchars(vehicle_type_label($row['vehicle_type'] ?? '')); ?></td>
-                                                <td data-order="<?= $scRate; ?>"><?= number_format($scRate, 2, '.', ''); ?></td>
+                                                <td data-order="<?= $scRate; ?>"><?= num_display($scRate); ?></td>
                                                 <td><?= htmlspecialchars($row['sc_type'] ?? 'fixed'); ?></td>
                                                 <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
                                                 <td>
@@ -484,13 +484,24 @@ foreach ($rentByCompany as $group) {
 
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
-            /*
-             * Export raw numbers via data-order (same as delivery_earnings).
-             * Commas in displayed values break Excel formulas — data-order holds the plain number.
-             */
+            /* Export raw numbers via data-order so Excel formulas work. */
             var exportOpts = {
                 columns: ':not(:last-child)',
-                orthogonal: 'sort'
+                orthogonal: 'sort',
+                format: {
+                    body: function (data, row, column, node) {
+                        if (node && node.getAttribute) {
+                            var order = node.getAttribute('data-order');
+                            if (order !== null && order !== '') {
+                                return order;
+                            }
+                        }
+                        if (typeof data === 'string') {
+                            return data.replace(/<[^>]*>/g, '').replace(/,/g, '').trim();
+                        }
+                        return data;
+                    }
+                }
             };
 
             jQuery('#table-4').DataTable({

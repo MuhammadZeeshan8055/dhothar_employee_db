@@ -244,7 +244,6 @@ $form_range_label = week_range_label($current_start, $current_end);
             margin-top: 6px;
         }
     </style>
-    <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
 </head>
 
 <body>
@@ -500,19 +499,19 @@ $form_range_label = week_range_label($current_start, $current_end);
                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= htmlspecialchars($row['week_year'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= !empty($row['week_number']) ? 'Week ' . (int) $row['week_number'] : ''; ?></td>
                                 <td><?= htmlspecialchars($rangeLabel); ?></td>
-                                <td data-order="<?= (float) $row['earning']; ?>"><?= number_format((float) $row['earning'], 2); ?></td>
-                                <td data-order="<?= (float) $row['commission']; ?>"><?= number_format((float) $row['commission'], 2); ?></td>
-                                <td data-order="<?= (float) $row['cash_in_hand']; ?>"><?= number_format((float) $row['cash_in_hand'], 2); ?></td>
-                                <td data-order="<?= (float) $row['app_tax']; ?>"><?= number_format((float) $row['app_tax'], 2); ?></td>
-                                <td data-order="<?= (float) $row['total_earning']; ?>"><?= number_format((float) $row['total_earning'], 2); ?></td>
-                                <td data-order="<?= (float) $row['tax']; ?>"><?= number_format((float) $row['tax'], 2); ?></td>
-                                <td data-order="<?= (float) $row['sc']; ?>"><?= number_format((float) $row['sc'], 2); ?></td>
-                                <td data-order="<?= (float) $row['others']; ?>"><?= number_format((float) $row['others'], 2); ?></td>
-                                <td data-order="<?= $weekBal; ?>"><?= number_format($weekBal, 2); ?></td>
-                                <td data-order="<?= $prevCarry; ?>"><?= number_format($prevCarry, 2); ?></td>
+                                <td data-order="<?= (float) $row['earning']; ?>"><?= num_display($row['earning']); ?></td>
+                                <td data-order="<?= (float) $row['commission']; ?>"><?= num_display($row['commission']); ?></td>
+                                <td data-order="<?= (float) $row['cash_in_hand']; ?>"><?= num_display($row['cash_in_hand']); ?></td>
+                                <td data-order="<?= (float) $row['app_tax']; ?>"><?= num_display($row['app_tax']); ?></td>
+                                <td data-order="<?= (float) $row['total_earning']; ?>"><?= num_display($row['total_earning']); ?></td>
+                                <td data-order="<?= (float) $row['tax']; ?>"><?= num_display($row['tax']); ?></td>
+                                <td data-order="<?= (float) $row['sc']; ?>"><?= num_display($row['sc']); ?></td>
+                                <td data-order="<?= (float) $row['others']; ?>"><?= num_display($row['others']); ?></td>
+                                <td data-order="<?= $weekBal; ?>"><?= num_display($weekBal); ?></td>
+                                <td data-order="<?= $prevCarry; ?>"><?= num_display($prevCarry); ?></td>
                                 <td data-order="<?= $totalBal; ?>">
                                     <strong<?= $totalBal < 0 ? ' style="color:#c62828;"' : ''; ?>>
-                                        <?= number_format($totalBal, 2); ?>
+                                        <?= num_display($totalBal); ?>
                                     </strong>
                                 </td>
                                 <td><?= htmlspecialchars($row['adjustment_note'] ?? ''); ?></td>
@@ -586,14 +585,24 @@ $form_range_label = week_range_label($current_start, $current_end);
         var CAN_UNLOCK_PAID = <?= isSuperAdmin() ? 'true' : 'false' ?>;
 
         jQuery(document).ready(function ($) {
-            /*
-             * This DataTables Buttons build has no format.body support.
-             * It uses $.isNumeric() — values like "2,005.69" become Excel text.
-             * So we export orthogonal "sort" data (from data-order = raw numbers).
-             */
+            /* Export raw numbers via data-order so Excel formulas work. */
             var exportOpts = {
                 columns: ':not(:first-child):not(:last-child)',
-                orthogonal: 'sort'
+                orthogonal: 'sort',
+                format: {
+                    body: function (data, row, column, node) {
+                        if (node && node.getAttribute) {
+                            var order = node.getAttribute('data-order');
+                            if (order !== null && order !== '') {
+                                return order;
+                            }
+                        }
+                        if (typeof data === 'string') {
+                            return data.replace(/<[^>]*>/g, '').replace(/,/g, '').trim();
+                        }
+                        return data;
+                    }
+                }
             };
 
             var $table4 = jQuery("#table-4");
@@ -619,7 +628,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                 ],
                 order: [[7, 'desc'], [8, 'desc']],
                 columnDefs: [
-                    { orderable: false, targets: [0, 23] }
+                    { orderable: false, targets: [0, 21] }
                 ]
             });
 
