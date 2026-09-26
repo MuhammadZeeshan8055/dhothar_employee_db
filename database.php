@@ -34,6 +34,11 @@ class Database
     return $this->conn;
   }
 
+  public function escape($value)
+  {
+    return $this->mysqli->real_escape_string($value);
+  }
+
   // Function to insert into the database
   public function insert($table, $params = array())
   {
@@ -301,6 +306,42 @@ class Database
     } else {
       return false;
     }
+  }
+
+  public function getUserByEmail($email)
+  {
+    $table = AUTH_USERS_TABLE;
+    $stmt = $this->mysqli->prepare(
+      "SELECT id, name, email, password, role, status FROM {$table} WHERE email = ? AND status = 'active' LIMIT 1"
+    );
+
+    if (!$stmt) {
+      return null;
+    }
+
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+
+    return $user ?: null;
+  }
+
+  public function updateLastLogin($userId)
+  {
+    $table = AUTH_USERS_TABLE;
+    $stmt = $this->mysqli->prepare("UPDATE {$table} SET last_login_at = NOW() WHERE id = ?");
+
+    if (!$stmt) {
+      return false;
+    }
+
+    $stmt->bind_param('i', $userId);
+    $success = $stmt->execute();
+    $stmt->close();
+
+    return $success;
   }
 
   // 🔹 Reusable function to get old record data

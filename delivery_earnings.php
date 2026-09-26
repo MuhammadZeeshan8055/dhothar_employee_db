@@ -41,17 +41,24 @@ if (isset($_POST['save_delivery_earning'])) {
 
     list($week_start, $week_end) = iso_week_range($week_year, $week_number);
 
-    // Rates required
-    $obj->select('employee_rate_settings', '*', null, "employee_id = $employee_id");
-    $rateRows = $obj->getResult();
-    if (empty($rateRows[0]['id'])) {
+    // Rates for this week (exact, carried, or legacy fallback)
+    $rateResult = get_rate_settings_for_week($obj, $employee_id, $week_year, $week_number);
+    if (!$rateResult) {
         earning_toast('error', 'No rate settings found for this employee. Set rates first.');
     }
-    $rates = $rateRows[0];
+    $rates = $rateResult['data'];
 
     // Previous week negative (if any)
     $carry = get_prev_carry($obj, $employee_id, $week_year, $week_number);
     $calc = calculate_week_earning($earning, $cash_in_hand, $app_tax, $others, $rates, $carry['prev_carry']);
+
+    // Same employee + year + week → update; otherwise insert
+    $existing = find_week_earning($obj, $employee_id, $week_year, $week_number);
+    $isUpdate = !empty($existing);
+
+    if ($isUpdate && (int) ($existing['status'] ?? 0) === 1) {
+        earning_toast('error', 'This week is paid and locked. Cannot update.');
+    }
 
     $data = [
         'employee_id' => $employee_id,
@@ -74,9 +81,9 @@ if (isset($_POST['save_delivery_earning'])) {
         'total_balance' => money_db($calc['total_balance']),
     ];
 
-    // Same employee + year + week → update; otherwise insert
-    $existing = find_week_earning($obj, $employee_id, $week_year, $week_number);
-    $isUpdate = !empty($existing);
+    if (!$isUpdate) {
+        $data['status'] = 0;
+    }
 
     if ($isUpdate) {
         $save = $obj->update('delivery_earnings', $data, 'id = ' . (int) $existing['id']);
@@ -111,14 +118,15 @@ if (isset($_POST['save_delivery_earning'])) {
 $obj->select(
     'add_employee_details',
     'add_employee_details.*',
-    'INNER JOIN employee_rate_settings ON employee_rate_settings.employee_id = add_employee_details.id',
-    "add_employee_details.work_type = 'food_delivery'",
+    null,
+    "add_employee_details.work_type = 'food_delivery' AND add_employee_details.id IN (SELECT DISTINCT employee_id FROM employee_rate_settings)",
     'add_employee_details.name ASC'
 );
 $employees = $obj->getResult();
 
 $filter_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : null;
 $filter_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : null;
+$filter_vehicle_company = trim($_GET['filter_vehicle_company'] ?? '');
 
 $where = [];
 if ($filter_year !== null) {
@@ -131,13 +139,29 @@ $earningsWhere = $where ? implode(' AND ', $where) : null;
 
 $obj->select(
     'delivery_earnings',
-    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.type_of_contract, employee_rate_settings.service_providers',
-    'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id
-     LEFT JOIN employee_rate_settings ON employee_rate_settings.employee_id = delivery_earnings.employee_id',
+    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.type_of_contract',
+    'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
     $earningsWhere,
     'delivery_earnings.week_year ASC, delivery_earnings.week_number ASC, delivery_earnings.id ASC'
 );
-$earnings = $obj->getResult();
+$earningsAll = enrich_earnings_with_vehicle($obj, $obj->getResult() ?: []);
+$rentByCompany = build_rent_by_company_summary($earningsAll);
+
+$earnings = $earningsAll;
+if ($filter_vehicle_company !== '') {
+    $earnings = array_values(array_filter($earnings, function ($row) use ($filter_vehicle_company) {
+        return ($row['vehicle_company_key'] ?? '') === $filter_vehicle_company;
+    }));
+}
+
+$grand_sc_rent = 0;
+$grand_employees = 0;
+foreach ($rentByCompany as $group) {
+    $grand_sc_rent += (float) $group['total_sc'];
+    $grand_employees += (int) $group['employees'];
+}
+
+$vehicleCompanies = vehicle_company_filter_options($obj);
 
 $form_range_label = week_range_label($current_start, $current_end);
 ?>
@@ -166,6 +190,68 @@ $form_range_label = week_range_label($current_start, $current_end);
         #earningForm .select2-container .select2-choice .select2-arrow b,
         #s2id_employee_id .select2-choice .select2-arrow b {
             background-image: url('<?= $base_url ?>assets/js/select2/select2.png') !important;
+        }
+
+        .bulk-status-actions {
+            margin-bottom: 15px;
+        }
+
+        .bulk-status-actions .btn {
+            margin-right: 8px;
+        }
+
+        #selectedCount {
+            margin-left: 8px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .earning-row-paid td {
+            background-color: #f4f4f4 !important;
+            color: #777;
+        }
+
+        .earning-row-paid .earning-checkbox {
+            cursor: not-allowed;
+        }
+
+        .earning-locked-label {
+            font-size: 11px;
+        }
+
+        .rent-by-company-wrap {
+            margin-bottom: 20px;
+        }
+
+        .rent-by-company-wrap h4 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        #rent-by-company {
+            max-width: 520px;
+            margin-bottom: 0;
+        }
+
+        #rent-by-company tbody tr.rent-company-row:hover {
+            background: #f5f9ff;
+        }
+
+        #rent-by-company tbody tr.active-company {
+            background: #eef6ff;
+            font-weight: 600;
+        }
+
+        #rent-by-company a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+        }
+
+        .rent-filter-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
         }
     </style>
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
@@ -264,29 +350,46 @@ $form_range_label = week_range_label($current_start, $current_end);
                                         <hr>
 
                                         <div class="row">
-                                            <div class="col-md-2">
-                                                <label class="control-label">Tax <small class="text-muted">(auto)</small></label>
-                                                <input type="text" name="tax" id="tax" class="form-control calc-readonly" readonly value="0.00">
+                                            <div class="col-md-12">
+                                                <div class="row">
+                                                    <div class="col-md-2">
+                                                        <label class="control-label">Tax <small class="text-muted">(auto)</small></label>
+                                                        <input type="text" name="tax" id="tax" class="form-control calc-readonly" readonly value="0.00">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="control-label">Vehicle Type <small class="text-muted">(auto)</small></label>
+                                                        <input type="text" name="vehicle_type" id="vehicle_type" class="form-control calc-readonly" readonly value="">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="control-label">Vehichle Rate <small class="text-muted">(auto)</small></label>
+                                                        <input type="text" name="sc" id="sc" class="form-control calc-readonly" readonly value="0.00">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="control-label">Vehicle Company Name <small class="text-muted">(auto)</small></label>
+                                                        <input type="text" name="vehicle_company_name" id="vehicle_company_name" class="form-control calc-readonly" readonly value="">
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-md-2">
-                                                <label class="control-label">SC <small class="text-muted">(auto)</small></label>
-                                                <input type="text" name="sc" id="sc" class="form-control calc-readonly" readonly value="0.00">
-                                            </div>
-                                            <div class="col-md-2">
+                                        </div>
+                                        
+                                        <hr>
+
+                                        <div class="row">
+                                            <div class="col-md-3">
                                                 <label class="control-label">Others</label>
                                                 <input type="number" step="0.01" name="others" id="others"
                                                     class="form-control calc-input" value="0">
                                             </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-3">
                                                 <label class="control-label">Week Balance <small class="text-muted">(auto)</small></label>
                                                 <input type="text" name="week_balance" id="week_balance" class="form-control calc-readonly" readonly value="0.00">
                                             </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-3">
                                                 <label class="control-label">Prev Adjust <small class="text-muted">(auto)</small></label>
                                                 <input type="text" id="prev_carry_display" class="form-control calc-readonly" readonly value="0.00">
                                                 <input type="hidden" name="prev_carry" id="prev_carry" value="0">
                                             </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-3">
                                                 <label class="control-label">Total Balance <small class="text-muted">(auto)</small></label>
                                                 <input type="text" name="total_balance" id="total_balance"
                                                     class="form-control calc-readonly total-highlight" readonly value="0.00">
@@ -322,22 +425,95 @@ $form_range_label = week_range_label($current_start, $current_end);
                         <select name="filter_week" class="form-control" style="margin-right: 8px; min-width: 130px;">
                             <?= week_options_html($filter_week, $filter_year ?: $current_year, true); ?>
                         </select>
+                        <select name="filter_vehicle_company" class="form-control" style="margin-right: 8px; min-width: 180px;">
+                            <option value="">All Vehicle Companies</option>
+                            <?php foreach ($vehicleCompanies as $vc): ?>
+                                <?php $key = $vc['vehicle_company_name'] ?? ''; ?>
+                                <option value="<?= htmlspecialchars($key); ?>"
+                                    <?= $filter_vehicle_company === $key ? 'selected' : ''; ?>>
+                                    <?= htmlspecialchars(vehicle_company_label($key)); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                         <button type="submit" class="btn btn-primary btn-sm" style="margin-right: 6px;">Apply</button>
                         <a href="delivery_earnings" class="btn btn-default btn-sm">Clear</a>
                     </form>
                 </div>
             </div>
 
-            <h3>Delivery Earnings</h3>
+            <?php if (!empty($rentByCompany)): ?>
+                <div class="rent-by-company-wrap">
+                    <h4>Rent by Vehicle Company</h4>
+                    <table class="table table-bordered table-sm" id="rent-by-company">
+                        <thead>
+                            <tr>
+                                <th>Vehicle Company</th>
+                                <th>Employees</th>
+                                <th>Total Vehicle Rent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($rentByCompany as $group): ?>
+                                <?php
+                                $isActive = $filter_vehicle_company !== '' && $filter_vehicle_company === $group['key'];
+                                $rowUrl = delivery_earnings_filter_url(
+                                    $base_url,
+                                    $filter_year,
+                                    $filter_week,
+                                    $group['key']
+                                );
+                                ?>
+                                <tr class="rent-company-row<?= $isActive ? ' active-company' : ''; ?>">
+                                    <td>
+                                        <a href="<?= htmlspecialchars($rowUrl); ?>">
+                                            <?= htmlspecialchars($group['label']); ?>
+                                        </a>
+                                    </td>
+                                    <td><?= (int) $group['employees']; ?></td>
+                                    <td><?= number_format((float) $group['total_sc'], 2); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td><strong><?= $grand_employees; ?></strong></td>
+                                <td><strong><?= number_format($grand_sc_rent, 2); ?></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="rent-filter-hint">
+                        Click a company to filter the table below.
+                        <?php if ($filter_vehicle_company !== ''): ?>
+                            <a href="<?= htmlspecialchars(delivery_earnings_filter_url($base_url, $filter_year, $filter_week)); ?>">Show all companies</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <h3>Delivery Earnings<?= $filter_vehicle_company !== '' ? ' — ' . htmlspecialchars(vehicle_company_label($filter_vehicle_company)) : ''; ?></h3>
             <br />
+
+            <div class="bulk-status-actions">
+                <button type="button" class="btn btn-success btn-sm" id="markPaidBtn" disabled>
+                    Mark Selected as Paid
+                </button>
+                <button type="button" class="btn btn-warning btn-sm" id="markUnpaidBtn" disabled>
+                    Mark Selected as Unpaid
+                </button>
+                <span id="selectedCount">0 selected</span>
+            </div>
 
             <table class="table table-bordered datatable table-3" id="table-4">
                 <thead>
                     <tr>
+                        <th style="width:40px;">
+                            <input type="checkbox" id="selectAllEarnings" title="Select all">
+                        </th>
                         <th>S.no</th>
                         <th>Employee</th>
                         <th>Company</th>
                         <th>Service Provider</th>
+                        <th>Vehicle Type</th>
+                        <th>Vehicle Company</th>
                         <th>Year</th>
                         <th>Week</th>
                         <th>Date Range</th>
@@ -353,6 +529,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                         <th>Prev Adjust</th>
                         <th>Total Balance</th>
                         <th>Note</th>
+                        <th>Status (Paid/Unpaid)</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -368,12 +545,19 @@ $form_range_label = week_range_label($current_start, $current_end);
                             $weekBal = row_week_balance($row);
                             $prevCarry = (float) ($row['prev_carry'] ?? 0);
                             $totalBal = (float) $row['total_balance'];
+                            $isPaid = (int) ($row['status'] ?? 0) === 1;
                             ?>
-                            <tr>
+                            <tr class="<?= $isPaid ? 'earning-row-paid' : '' ?>">
+                                <td>
+                                    <input type="checkbox" class="earning-checkbox" value="<?= (int) $row['id']; ?>"
+                                        <?= $isPaid ? 'disabled' : '' ?>>
+                                </td>
                                 <td data-order="<?= $sno; ?>"><?= $sno++; ?></td>
                                 <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['company_name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
+                                <td><?= htmlspecialchars($row['vehicle_type'] ?? ''); ?></td>
+                                <td><?= htmlspecialchars($row['vehicle_company_name'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= htmlspecialchars($row['week_year'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= !empty($row['week_number']) ? 'Week ' . (int) $row['week_number'] : ''; ?></td>
                                 <td><?= htmlspecialchars($rangeLabel); ?></td>
@@ -393,19 +577,28 @@ $form_range_label = week_range_label($current_start, $current_end);
                                     </strong>
                                 </td>
                                 <td><?= htmlspecialchars($row['adjustment_note'] ?? ''); ?></td>
+                                <td class="earning-status-cell">
+                                    <strong><?= $isPaid ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'; ?></strong>
+                                </td>
                                 <td>
-                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                        <button type="button" class="btn btn-primary btn-sm edit-earning-btn"
-                                            data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
-                                            data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
-                                            data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
-                                            <span class="entypo-pencil"></span> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm delete-earning-btn"
-                                            data-id="<?= (int) $row['id']; ?>">
-                                            <span class="entypo-trash"></span> Delete
-                                        </button>
-                                    </div>
+                                    <?php if ($isPaid): ?>
+                                        <span class="label label-success earning-locked-label">
+                                            <i class="entypo-lock"></i> Locked
+                                        </span>
+                                    <?php else: ?>
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                            <button type="button" class="btn btn-primary btn-sm edit-earning-btn"
+                                                data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
+                                                data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
+                                                data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
+                                                <span class="entypo-pencil"></span> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm delete-earning-btn"
+                                                data-id="<?= (int) $row['id']; ?>">
+                                                <span class="entypo-trash"></span> Delete
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php
@@ -458,7 +651,7 @@ $form_range_label = week_range_label($current_start, $current_end);
              * So we export orthogonal "sort" data (from data-order = raw numbers).
              */
             var exportOpts = {
-                columns: ':not(:last-child)',
+                columns: ':not(:first-child):not(:last-child)',
                 orthogonal: 'sort'
             };
 
@@ -483,8 +676,76 @@ $form_range_label = week_range_label($current_start, $current_end);
                         exportOptions: exportOpts
                     }
                 ],
-                order: [[0, 'asc']]
+                order: [[7, 'desc'], [8, 'desc']],
+                columnDefs: [
+                    { orderable: false, targets: [0, 23] }
+                ]
             });
+
+            function updateSelectionState() {
+                var count = $('.earning-checkbox:checked').length;
+                var total = $('.earning-checkbox:not(:disabled)').length;
+
+                $('#selectedCount').text(count + ' selected');
+                $('#markPaidBtn, #markUnpaidBtn').prop('disabled', count === 0);
+                $('#selectAllEarnings').prop('checked', total > 0 && count === total);
+            }
+
+            function setRowStatus($row, status) {
+                var label = status == 1
+                    ? '<span class="text-success">Paid</span>'
+                    : '<span class="text-danger">Unpaid</span>';
+                $row.find('.earning-status-cell strong').html(label);
+            }
+
+            function lockRow($row) {
+                $row.addClass('earning-row-paid');
+                $row.find('.earning-checkbox').prop('checked', false).prop('disabled', true);
+                $row.find('td:last').html(
+                    '<span class="label label-success earning-locked-label"><i class="entypo-lock"></i> Locked</span>'
+                );
+                setRowStatus($row, 1);
+            }
+
+            $('#selectAllEarnings').on('change', function () {
+                $('.earning-checkbox:not(:disabled)').prop('checked', this.checked);
+                updateSelectionState();
+            });
+
+            $(document).on('change', '.earning-checkbox', updateSelectionState);
+
+            function updateEarningStatus(status) {
+                var ids = $('.earning-checkbox:checked').map(function () {
+                    return $(this).val();
+                }).get();
+
+                $.post('ajax/update_earning_status', { ids: ids, status: status }, function (res) {
+                    if (res === 'success') {
+                        ids.forEach(function (id) {
+                            var $row = $('.earning-checkbox[value="' + id + '"]').closest('tr');
+                            if (status == 1) {
+                                lockRow($row);
+                            } else {
+                                setRowStatus($row, 0);
+                            }
+                        });
+                        updateSelectionState();
+                        toastr.success('Status updated successfully!');
+                    } else {
+                        toastr.error('Update failed!');
+                    }
+                });
+            }
+
+            $('#markPaidBtn').on('click', function () {
+                updateEarningStatus(1);
+            });
+
+            $('#markUnpaidBtn').on('click', function () {
+                updateEarningStatus(0);
+            });
+
+            updateSelectionState();
         });
     </script>
 </body>

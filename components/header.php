@@ -9,7 +9,7 @@
 
 
 
-                    Muhammad Zeeshan </a>
+                    <?= htmlspecialchars($currentUser['name'] ?? 'User') ?> </a>
                 <!--<ul class="dropdown-menu">-->
                 <!--   <li class="caret"></li>-->
                 <!--   <li> -->

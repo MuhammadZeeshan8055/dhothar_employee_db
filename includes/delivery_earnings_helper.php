@@ -239,3 +239,209 @@ function week_options_html($selected, $year, $include_all = false)
     }
     return $html;
 }
+
+/** Find rate settings for exact employee + week. */
+function find_week_rate_settings($obj, $employee_id, $week_year, $week_number)
+{
+    $employee_id = (int) $employee_id;
+    $week_year = (int) $week_year;
+    $week_number = (int) $week_number;
+
+    $obj->select(
+        'employee_rate_settings',
+        '*',
+        null,
+        "employee_id = $employee_id AND week_year = $week_year AND week_number = $week_number",
+        'id DESC',
+        1
+    );
+    $rows = $obj->getResult();
+
+    return (!empty($rows[0]['id'])) ? $rows[0] : null;
+}
+
+/**
+ * Rate settings for a week: exact row, else latest previous week, else legacy (NULL week).
+ */
+function get_rate_settings_for_week($obj, $employee_id, $week_year, $week_number)
+{
+    $employee_id = (int) $employee_id;
+    $week_year = (int) $week_year;
+    $week_number = (int) $week_number;
+
+    $exact = find_week_rate_settings($obj, $employee_id, $week_year, $week_number);
+    if ($exact) {
+        return [
+            'data' => $exact,
+            'source' => 'exact',
+            'source_year' => $week_year,
+            'source_week' => $week_number,
+        ];
+    }
+
+    $where = "employee_id = $employee_id AND week_year IS NOT NULL AND week_number IS NOT NULL AND ("
+        . "week_year < $week_year OR (week_year = $week_year AND week_number < $week_number)"
+        . ")";
+
+    $obj->select('employee_rate_settings', '*', null, $where, 'week_year DESC, week_number DESC, id DESC', 1);
+    $rows = $obj->getResult();
+
+    if (!empty($rows[0]['id'])) {
+        return [
+            'data' => $rows[0],
+            'source' => 'carried',
+            'source_year' => (int) $rows[0]['week_year'],
+            'source_week' => (int) $rows[0]['week_number'],
+        ];
+    }
+
+    $obj->select(
+        'employee_rate_settings',
+        '*',
+        null,
+        "employee_id = $employee_id AND week_year IS NULL",
+        'id DESC',
+        1
+    );
+    $legacy = $obj->getResult();
+
+    if (!empty($legacy[0]['id'])) {
+        return [
+            'data' => $legacy[0],
+            'source' => 'legacy',
+            'source_year' => null,
+            'source_week' => null,
+        ];
+    }
+
+    return null;
+}
+
+function rate_type_label($rate, $type)
+{
+    $rate = number_format((float) $rate, 2);
+    return $type === 'fixed' ? "Fixed {$rate}" : "{$rate}%";
+}
+
+function vehicle_type_label($value)
+{
+    $map = [
+        'bicyle' => 'Bicycle',
+        'sc' => 'Scooter',
+        'car' => 'Car',
+    ];
+
+    return $map[$value] ?? $value;
+}
+
+function vehicle_company_label($value)
+{
+    $map = [
+        'uny_mobility' => 'UNY MOBILITY',
+        'uny_mobility_srl' => 'UNY MOBILITY SRL',
+        'kiris_rent_srl' => 'KIRIS RENT SRL',
+        'rbj_brothers_srl' => 'RBJ BROTHERS SRL',
+    ];
+
+    return $map[$value] ?? $value;
+}
+
+function settings_toast($type, $message)
+{
+    $_SESSION['toast'] = ['type' => $type, 'message' => $message];
+    header('Location: delivery_settings');
+    exit;
+}
+
+/** Distinct vehicle companies from rate settings (for filter dropdown). */
+function vehicle_company_filter_options($obj)
+{
+    $obj->sql(
+        "SELECT DISTINCT vehicle_company_name FROM employee_rate_settings
+         WHERE vehicle_company_name IS NOT NULL AND vehicle_company_name != ''
+         ORDER BY vehicle_company_name ASC"
+    );
+    return $obj->getResult();
+}
+
+/** Group SC rent totals by vehicle company. */
+function build_rent_by_company_summary(array $earnings)
+{
+    $groups = [];
+
+    foreach ($earnings as $row) {
+        $key = trim($row['vehicle_company_key'] ?? '');
+        $groupKey = $key !== '' ? $key : '_none';
+
+        if (!isset($groups[$groupKey])) {
+            $groups[$groupKey] = [
+                'key' => $key,
+                'label' => $key !== '' ? vehicle_company_label($key) : 'Not set',
+                'employees' => 0,
+                'total_sc' => 0.0,
+            ];
+        }
+
+        $groups[$groupKey]['employees']++;
+        $groups[$groupKey]['total_sc'] += (float) ($row['sc'] ?? 0);
+    }
+
+    $summary = array_values($groups);
+    usort($summary, function ($a, $b) {
+        return strcasecmp($a['label'], $b['label']);
+    });
+
+    return $summary;
+}
+
+/** Build filter URL for delivery earnings list. */
+function delivery_earnings_filter_url($base_url, $year, $week, $vehicleCompany = '')
+{
+    $params = [];
+    if ($year !== null && $year !== '') {
+        $params['filter_year'] = (int) $year;
+    }
+    if ($week !== null && $week !== '') {
+        $params['filter_week'] = (int) $week;
+    }
+    if ($vehicleCompany !== '') {
+        $params['filter_vehicle_company'] = $vehicleCompany;
+    }
+
+    $query = http_build_query($params);
+    return $base_url . 'delivery_earnings' . ($query ? '?' . $query : '');
+}
+
+/** Attach vehicle info from week rate settings onto earning rows. */
+function enrich_earnings_with_vehicle($obj, array $earnings)
+{
+    foreach ($earnings as $i => $row) {
+        if (empty($row['id'])) {
+            continue;
+        }
+
+        $rateResult = get_rate_settings_for_week(
+            $obj,
+            (int) $row['employee_id'],
+            (int) ($row['week_year'] ?? 0),
+            (int) ($row['week_number'] ?? 0)
+        );
+
+        if ($rateResult) {
+            $rates = $rateResult['data'];
+            $earnings[$i]['vehicle_type'] = vehicle_type_label($rates['vehicle_type'] ?? '');
+            $earnings[$i]['vehicle_company_name'] = vehicle_company_label($rates['vehicle_company_name'] ?? '');
+            $earnings[$i]['vehicle_company_key'] = $rates['vehicle_company_name'] ?? '';
+
+            if (empty($earnings[$i]['service_providers'])) {
+                $earnings[$i]['service_providers'] = $rates['service_providers'] ?? '';
+            }
+        } else {
+            $earnings[$i]['vehicle_type'] = '';
+            $earnings[$i]['vehicle_company_name'] = '';
+            $earnings[$i]['vehicle_company_key'] = '';
+        }
+    }
+
+    return $earnings;
+}

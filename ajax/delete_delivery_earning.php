@@ -11,6 +11,14 @@ if ($id <= 0) {
     exit;
 }
 
+$obj->select("delivery_earnings", "status", null, "id = $id", null, 1);
+$row = $obj->getResult();
+
+if (!empty($row) && (int) $row[0]['status'] === 1) {
+    echo "locked";
+    exit;
+}
+
 $delete = $obj->delete("delivery_earnings", "id=$id");
 
 echo $delete ? "success" : "error";

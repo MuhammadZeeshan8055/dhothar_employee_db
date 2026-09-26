@@ -70,6 +70,30 @@
         return type === 'fixed' ? ('Fixed ' + money(rate)) : (rate + '%');
     }
 
+    function vehicleTypeLabel(val) {
+        var map = { bicyle: 'Bicycle', sc: 'Scooter', car: 'Car' };
+        return map[val] || val || '';
+    }
+
+    function vehicleCompanyLabel(val) {
+        var map = {
+            uny_mobility: 'UNY MOBILITY',
+            uny_mobility_srl: 'UNY MOBILITY SRL',
+            kiris_rent_srl: 'KIRIS RENT SRL',
+            rbj_brothers_srl: 'RBJ BROTHERS SRL'
+        };
+        return map[val] || val || '';
+    }
+
+    function fillVehicleInfo(data) {
+        if (!data) {
+            $('#vehicle_type, #vehicle_company_name').val('');
+            return;
+        }
+        $('#vehicle_type').val(vehicleTypeLabel(data.vehicle_type));
+        $('#vehicle_company_name').val(vehicleCompanyLabel(data.vehicle_company_name));
+    }
+
     function setAlert(message, isEdit) {
         var $el = $('#carryAlert');
         if (!message) {
@@ -209,14 +233,20 @@
 
         if (!employeeId) {
             $('#rateInfo').text('Select employee to load rate settings.');
+            fillVehicleInfo(null);
             loadWeekEntry();
             return;
         }
 
-        $.getJSON('ajax/get_employee_rates', { employee_id: employeeId })
+        $.getJSON('ajax/get_employee_rates', {
+            employee_id: employeeId,
+            week_year: $('#week_year').val(),
+            week_number: $('#week_number').val()
+        })
             .done(function (res) {
                 if (res.success) {
                     rates = res.data;
+                    fillVehicleInfo(rates);
                     $('#rateInfo').html(
                         'Rates — Commission: <strong>' + rateLabel(rates.commission_rate, rates.commission_type) +
                         '</strong> | Tax: <strong>' + rateLabel(rates.tax_rate, rates.tax_type) +
@@ -224,6 +254,7 @@
                     );
                 } else {
                     rates = null;
+                    fillVehicleInfo(null);
                     $('#rateInfo').text(res.message || 'No rate settings found.');
                     toastr.warning(res.message || 'No rate settings found for this employee.');
                 }
@@ -231,6 +262,7 @@
             })
             .fail(function () {
                 rates = null;
+                fillVehicleInfo(null);
                 $('#rateInfo').text('Failed to load rate settings.');
                 toastr.error('Failed to load rate settings.');
                 loadWeekEntry();
@@ -260,12 +292,12 @@
         $('#week_year').on('change', function () {
             rebuildWeeks($(this).val(), $('#week_number').val());
             refreshDateRange();
-            loadWeekEntry();
+            loadRates($('#employee_id').val());
         });
 
         $('#week_number').on('change', function () {
             refreshDateRange();
-            loadWeekEntry();
+            loadRates($('#employee_id').val());
         });
 
         refreshDateRange();
@@ -313,6 +345,8 @@
                         $(this).remove();
                     });
                     toastr.success('Earning record deleted successfully!');
+                } else if (response == 'locked') {
+                    toastr.error('Paid record is locked and cannot be deleted.');
                 } else {
                     toastr.error('Delete failed!');
                 }
