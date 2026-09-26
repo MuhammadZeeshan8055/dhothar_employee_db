@@ -324,8 +324,8 @@ foreach ($rentByCompany as $group) {
                                                     <input type="text" name="sc_rate" id="sc_rate" class="form-control"
                                                         placeholder="e.g. 10">
                                                     <select name="sc_type" id="sc_type" class="form-control">
-                                                        <option value="percentage">%</option>
                                                         <option value="fixed">Fixed</option>
+                                                        <option value="percentage">%</option>
                                                     </select>
                                                 </div>
                                             </div>
