@@ -244,8 +244,8 @@ $form_range_label = week_range_label($current_start, $current_end);
                                                     </div>
                                                     <div class="col-md-4">
                                                         <select name="tax_type" id="tax_type" class="form-control">
-                                                            <option value="percentage">%</option>
                                                             <option value="fixed">Fixed</option>
+                                                            <option value="percentage">%</option>
                                                         </select>
                                                     </div>
                                                 </div>
