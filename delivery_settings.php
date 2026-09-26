@@ -254,7 +254,7 @@ foreach ($rentByCompany as $group) {
                                         <hr>
 
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-6">
                                                 <label class="control-label">Commission Rate</label>
                                                 <div class="row">
                                                     <div class="col-md-8">
@@ -269,12 +269,13 @@ foreach ($rentByCompany as $group) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <br>
-
-                                        <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-3">
+                                                <label class="control-label">Tax (Fixed)</label>
+                                                <input type="text" name="tax_rate" id="tax_rate" class="form-control"
+                                                    placeholder="e.g. 10">
+                                                <input type="hidden" name="tax_type" id="tax_type" value="fixed">
+                                            </div>
+                                            <div class="col-md-3">
                                                 <label class="control-label">Service Providers</label>
                                                 <select name="service_providers" id="service_providers" class="form-control">
                                                     <option value="AML">AML</option>
@@ -283,20 +284,10 @@ foreach ($rentByCompany as $group) {
                                             </div>
                                         </div>
 
-                                        <br>
+                                        <hr>
 
                                         <div class="row">
-                                            <div class="col-md-12">
-                                                <label class="control-label">Tax (Fixed)</label>
-                                                <input type="text" name="tax_rate" id="tax_rate" class="form-control"
-                                                    placeholder="e.g. 10">
-                                                <input type="hidden" name="tax_type" id="tax_type" value="fixed">
-                                            </div>
-                                        </div>
-
-                                        <br>
-
-                                        <div class="row">
+                                            
                                             <div class="col-md-4">
                                                 <label class="control-label">Vehicle Type</label>
                                                 <select name="vehicle_type" id="vehicle_type" class="form-control" required>
@@ -307,18 +298,13 @@ foreach ($rentByCompany as $group) {
                                                     <option value="own_car">Own Car</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-4">
                                                 <label class="control-label">Vehicle Rate (Fixed)</label>
                                                 <input type="text" name="sc_rate" id="sc_rate" class="form-control"
                                                     placeholder="e.g. 10">
                                                 <input type="hidden" name="sc_type" id="sc_type" value="fixed">
                                             </div>
-                                        </div>
-
-                                        <br>
-
-                                        <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-4">
                                                 <label class="control-label">Vehicle Company Name</label>
                                                 <select name="vehicle_company_name" id="vehicle_company_name" class="form-control" required>
                                                     <option value="">Select Company</option>
@@ -360,7 +346,7 @@ foreach ($rentByCompany as $group) {
                                     <button type="submit" class="btn btn-primary btn-sm">Show</button>
                                 </form>
 
-                                <table class="table table-bordered datatable table-3" id="table-4">
+                                <table class="table table-bordered datatable table-3" id="settings-table">
                                     <thead>
                                         <tr>
                                             <th>S.no</th>
@@ -369,13 +355,9 @@ foreach ($rentByCompany as $group) {
                                             <th>Week</th>
                                             <th>Date Range</th>
                                             <th>Commission Rate</th>
-                                            <th>Commission Type</th>
                                             <th>Service Provider</th>
                                             <th>Tax Rate</th>
-                                            <th>Tax Type</th>
-                                            <th>Vehicle Type</th>
                                             <th>Vehicle Rate</th>
-                                            <th>Vehicle Rate Type</th>
                                             <th>Vehicle Company</th>
                                             <th>Action</th>
                                         </tr>
@@ -395,13 +377,9 @@ foreach ($rentByCompany as $group) {
                                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= (int) ($row['week_number'] ?? 0); ?></td>
                                                 <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
                                                 <td data-order="<?= $commissionRate; ?>"><?= num_display($commissionRate); ?></td>
-                                                <td><?= htmlspecialchars($row['commission_type'] ?? 'percentage'); ?></td>
                                                 <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
                                                 <td data-order="<?= $taxRate; ?>"><?= num_display($taxRate); ?></td>
-                                                <td><?= htmlspecialchars($row['tax_type'] ?? 'fixed'); ?></td>
-                                                <td><?= htmlspecialchars(vehicle_type_label($row['vehicle_type'] ?? '')); ?></td>
                                                 <td data-order="<?= $scRate; ?>"><?= num_display($scRate); ?></td>
-                                                <td><?= htmlspecialchars($row['sc_type'] ?? 'fixed'); ?></td>
                                                 <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
                                                 <td>
                                                     <button type="button" class="btn btn-primary btn-sm edit-settings-btn"
@@ -504,7 +482,7 @@ foreach ($rentByCompany as $group) {
                 }
             };
 
-            jQuery('#table-4').DataTable({
+            jQuery('#settings-table').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     { extend: 'copyHtml5', exportOptions: exportOpts },
@@ -514,7 +492,7 @@ foreach ($rentByCompany as $group) {
                 ],
                 order: [[3, 'asc'], [2, 'asc']],
                 columnDefs: [
-                    { orderable: false, targets: [14] }
+                    { orderable: false, targets: [10] }
                 ]
             });
         });
