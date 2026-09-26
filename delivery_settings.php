@@ -18,8 +18,8 @@ if (isset($_POST['save_delivery_settings'])) {
     $allowed_types = ['percentage', 'fixed'];
 
     $commission_type = in_array($_POST['commission_type'] ?? '', $allowed_types, true) ? $_POST['commission_type'] : 'percentage';
-    $tax_type = in_array($_POST['tax_type'] ?? '', $allowed_types, true) ? $_POST['tax_type'] : 'percentage';
-    $sc_type = in_array($_POST['sc_type'] ?? '', $allowed_types, true) ? $_POST['sc_type'] : 'percentage';
+    $tax_type = 'fixed';
+    $sc_type = 'fixed';
 
     if ($employee_id <= 0) {
         settings_toast('error', 'Please select an employee.');
@@ -129,8 +129,6 @@ foreach ($rentByCompany as $group) {
     <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2-bootstrap.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/delivery_earnings.css">
-
-    <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
 
     <style>
         #employee_id+.select2-container,
@@ -289,19 +287,10 @@ foreach ($rentByCompany as $group) {
 
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <label class="control-label">Tax</label>
-                                                <div class="row">
-                                                    <div class="col-md-8">
-                                                        <input type="text" name="tax_rate" id="tax_rate" class="form-control"
-                                                            placeholder="e.g. 10">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <select name="tax_type" id="tax_type" class="form-control">
-                                                            <option value="fixed">Fixed</option>
-                                                            <option value="percentage">%</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                                <label class="control-label">Tax (Fixed)</label>
+                                                <input type="text" name="tax_rate" id="tax_rate" class="form-control"
+                                                    placeholder="e.g. 10">
+                                                <input type="hidden" name="tax_type" id="tax_type" value="fixed">
                                             </div>
                                         </div>
 
@@ -315,19 +304,14 @@ foreach ($rentByCompany as $group) {
                                                     <option value="bicyle">Bicycle</option>
                                                     <option value="sc">Scooter</option>
                                                     <option value="car">Car</option>
-                                                    <option value="on_car">On Car</option>
+                                                    <option value="own_car">Own Car</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-8">
-                                                <label class="control-label">Vehicle Rate</label>
-                                                <div style="display:flex; gap:10px;">
-                                                    <input type="text" name="sc_rate" id="sc_rate" class="form-control"
-                                                        placeholder="e.g. 10">
-                                                    <select name="sc_type" id="sc_type" class="form-control">
-                                                        <option value="fixed">Fixed</option>
-                                                        <option value="percentage">%</option>
-                                                    </select>
-                                                </div>
+                                                <label class="control-label">Vehicle Rate (Fixed)</label>
+                                                <input type="text" name="sc_rate" id="sc_rate" class="form-control"
+                                                    placeholder="e.g. 10">
+                                                <input type="hidden" name="sc_type" id="sc_type" value="fixed">
                                             </div>
                                         </div>
 
@@ -341,7 +325,7 @@ foreach ($rentByCompany as $group) {
                                                     <option value="uny_mobility_srl">UNY MOBILITY SRL</option>
                                                     <option value="kiris_rent_srl">KIRIS RENT SRL</option>
                                                     <option value="rbj_brothers_srl">RBJ BROTHERS SRL</option>
-                                                    <option value="on_car">On Car</option>
+                                                    <option value="own_car">Own Car</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -376,60 +360,61 @@ foreach ($rentByCompany as $group) {
                                     <button type="submit" class="btn btn-primary btn-sm">Show</button>
                                 </form>
 
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-sm" id="settings-list-table">
-                                        <thead>
+                                <table class="table table-bordered datatable table-3" id="table-4">
+                                    <thead>
+                                        <tr>
+                                            <th>S.no</th>
+                                            <th>Employee</th>
+                                            <th>Year</th>
+                                            <th>Week</th>
+                                            <th>Date Range</th>
+                                            <th>Commission Rate</th>
+                                            <th>Commission Type</th>
+                                            <th>Service Provider</th>
+                                            <th>Tax Rate</th>
+                                            <th>Tax Type</th>
+                                            <th>Vehicle Type</th>
+                                            <th>Vehicle Rate</th>
+                                            <th>Vehicle Rate Type</th>
+                                            <th>Vehicle Company</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $sno = 1;
+                                        foreach ($savedSettings as $row):
+                                            $commissionRate = (float) ($row['commission_rate'] ?? 0);
+                                            $taxRate = (float) ($row['tax_rate'] ?? 0);
+                                            $scRate = (float) ($row['sc_rate'] ?? 0);
+                                        ?>
                                             <tr>
-                                                <th>#</th>
-                                                <th>Employee</th>
-                                                <th>Year</th>
-                                                <th>Week</th>
-                                                <th>Date Range</th>
-                                                <th>Commission</th>
-                                                <th>Service Provider</th>
-                                                <th>Tax</th>
-                                                <th>Vehicle Type</th>
-                                                <th>Vehicle Rate</th>
-                                                <th>Vehicle Company</th>
-                                                <th>Action</th>
+                                                <td data-order="<?= $sno; ?>"><?= $sno++; ?></td>
+                                                <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
+                                                <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= (int) ($row['week_year'] ?? 0); ?></td>
+                                                <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= (int) ($row['week_number'] ?? 0); ?></td>
+                                                <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
+                                                <td data-order="<?= $commissionRate; ?>"><?= number_format($commissionRate, 2, '.', ''); ?></td>
+                                                <td><?= htmlspecialchars($row['commission_type'] ?? 'percentage'); ?></td>
+                                                <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
+                                                <td data-order="<?= $taxRate; ?>"><?= number_format($taxRate, 2, '.', ''); ?></td>
+                                                <td><?= htmlspecialchars($row['tax_type'] ?? 'fixed'); ?></td>
+                                                <td><?= htmlspecialchars(vehicle_type_label($row['vehicle_type'] ?? '')); ?></td>
+                                                <td data-order="<?= $scRate; ?>"><?= number_format($scRate, 2, '.', ''); ?></td>
+                                                <td><?= htmlspecialchars($row['sc_type'] ?? 'fixed'); ?></td>
+                                                <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-primary btn-sm edit-settings-btn"
+                                                        data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
+                                                        data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
+                                                        data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
+                                                        Edit
+                                                    </button>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if (empty($savedSettings)): ?>
-                                                <tr>
-                                                    <td colspan="12" class="text-center text-muted">
-                                                        No saved settings for Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?>.
-                                                    </td>
-                                                </tr>
-                                            <?php else: ?>
-                                                <?php $sno = 1; ?>
-                                                <?php foreach ($savedSettings as $row): ?>
-                                                    <tr>
-                                                        <td><?= $sno++; ?></td>
-                                                        <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
-                                                        <td><?= (int) ($row['week_year'] ?? 0); ?></td>
-                                                        <td><?= (int) ($row['week_number'] ?? 0); ?></td>
-                                                        <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
-                                                        <td><?= htmlspecialchars(rate_type_label($row['commission_rate'] ?? 0, $row['commission_type'] ?? 'percentage')); ?></td>
-                                                        <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
-                                                        <td><?= htmlspecialchars(rate_type_label($row['tax_rate'] ?? 0, $row['tax_type'] ?? 'fixed')); ?></td>
-                                                        <td><?= htmlspecialchars(vehicle_type_label($row['vehicle_type'] ?? '')); ?></td>
-                                                        <td><?= htmlspecialchars(rate_type_label($row['sc_rate'] ?? 0, $row['sc_type'] ?? 'fixed')); ?></td>
-                                                        <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-primary btn-sm edit-settings-btn"
-                                                                data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
-                                                                data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
-                                                                data-week-number="<?= (int) ($row['week_number'] ?? 0); ?>">
-                                                                Edit
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
 
                             <?php if (!empty($rentByCompany)): ?>
@@ -483,6 +468,9 @@ foreach ($rentByCompany as $group) {
         <?php unset($_SESSION['toast']); ?>
     <?php endif; ?>
 
+    <script src="<?= $base_url ?>assets/js/datatables/datatables.js"></script>
+    <link rel="stylesheet" href="<?= $base_url ?>assets/js/datatables/datatables.css">
+
     <script src="<?= $base_url ?>assets/js/gsap/TweenMax.min.js"></script>
     <script src="<?= $base_url ?>assets/js/jquery-ui/js/jquery-ui-1.10.3.minimal.min.js"></script>
     <script src="<?= $base_url ?>assets/js/bootstrap.js"></script>
@@ -493,6 +481,33 @@ foreach ($rentByCompany as $group) {
     <script src="<?= $base_url ?>assets/js/select2/select2.min.js"></script>
     <script src="<?= $base_url ?>assets/js/neon-custom.js"></script>
     <script src="<?= $base_url ?>assets/js/delivery_settings.js"></script>
+
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            /*
+             * Export raw numbers via data-order (same as delivery_earnings).
+             * Commas in displayed values break Excel formulas — data-order holds the plain number.
+             */
+            var exportOpts = {
+                columns: ':not(:last-child)',
+                orthogonal: 'sort'
+            };
+
+            jQuery('#table-4').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    { extend: 'copyHtml5', exportOptions: exportOpts },
+                    { extend: 'excelHtml5', exportOptions: exportOpts },
+                    { extend: 'csvHtml5', exportOptions: exportOpts },
+                    { extend: 'pdfHtml5', exportOptions: exportOpts }
+                ],
+                order: [[3, 'asc'], [2, 'asc']],
+                columnDefs: [
+                    { orderable: false, targets: [14] }
+                ]
+            });
+        });
+    </script>
 </body>
 
 </html>

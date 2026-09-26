@@ -91,8 +91,6 @@
     function clearForm() {
         $('#commission_rate, #tax_rate, #sc_rate').val('');
         $('#commission_type').val('percentage');
-        $('#tax_type').val('percentage');
-        $('#sc_type').val('fixed');
         $('#service_providers').val('AML');
         $('#vehicle_type').val('');
         $('#vehicle_company_name').val('');
@@ -107,9 +105,7 @@
         $('#commission_rate').val(data.commission_rate);
         $('#commission_type').val(data.commission_type);
         $('#tax_rate').val(data.tax_rate);
-        $('#tax_type').val(data.tax_type);
         $('#sc_rate').val(data.sc_rate);
-        $('#sc_type').val(data.sc_type);
         $('#service_providers').val(data.service_providers);
         $('#vehicle_type').val(data.vehicle_type);
         $('#vehicle_company_name').val(data.vehicle_company_name);
@@ -137,8 +133,8 @@
         var company = selectedText($('#vehicle_company_name'));
         var scRate = $('#sc_rate').val() || '0';
         var commission = rateLabel($('#commission_rate').val(), $('#commission_type').val());
-        var tax = rateLabel($('#tax_rate').val(), $('#tax_type').val());
-        var rent = rateLabel(scRate, $('#sc_type').val());
+        var tax = rateLabel($('#tax_rate').val(), 'fixed');
+        var rent = rateLabel(scRate, 'fixed');
 
         var html = employeeName()
             + ' has vehicle <strong>' + vehicle + '</strong>, company <strong>' + company + '</strong>, '
@@ -213,11 +209,10 @@
         $('#settingsForm').on('input change', 'input, select', updateSummary);
 
         $('#vehicle_type').on('change', function () {
-            if ($(this).val() === 'on_car') {
-                $('#vehicle_company_name').val('on_car');
+            if ($(this).val() === 'own_car') {
+                $('#vehicle_company_name').val('own_car');
                 $('#sc_rate').val('0');
-                $('#sc_type').val('fixed');
-            } else if ($('#vehicle_company_name').val() === 'on_car') {
+            } else if ($('#vehicle_company_name').val() === 'own_car') {
                 $('#vehicle_company_name').val('');
             }
             updateSummary();

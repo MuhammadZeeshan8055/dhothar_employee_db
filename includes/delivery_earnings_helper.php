@@ -330,6 +330,7 @@ function vehicle_type_label($value)
         'sc' => 'Scooter',
         'car' => 'Car',
         'on_car' => 'On Car',
+        'own_car' => 'Own Car',
     ];
 
     return $map[$value] ?? $value;
@@ -343,6 +344,7 @@ function vehicle_company_label($value)
         'kiris_rent_srl' => 'KIRIS RENT SRL',
         'rbj_brothers_srl' => 'RBJ BROTHERS SRL',
         'on_car' => 'On Car',
+        'own_car' => 'Own Car',
     ];
 
     return $map[$value] ?? $value;
