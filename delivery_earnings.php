@@ -56,7 +56,7 @@ if (isset($_POST['save_delivery_earning'])) {
     $existing = find_week_earning($obj, $employee_id, $week_year, $week_number);
     $isUpdate = !empty($existing);
 
-    if ($isUpdate && (int) ($existing['status'] ?? 0) === 1) {
+    if ($isUpdate && (int) ($existing['status'] ?? 0) === 1 && !isSuperAdmin()) {
         earning_toast('error', 'This week is paid and locked. Cannot update.');
     }
 
@@ -546,11 +546,12 @@ $form_range_label = week_range_label($current_start, $current_end);
                             $prevCarry = (float) ($row['prev_carry'] ?? 0);
                             $totalBal = (float) $row['total_balance'];
                             $isPaid = (int) ($row['status'] ?? 0) === 1;
+                            $rowLocked = $isPaid && !isSuperAdmin();
                             ?>
                             <tr class="<?= $isPaid ? 'earning-row-paid' : '' ?>">
                                 <td>
                                     <input type="checkbox" class="earning-checkbox" value="<?= (int) $row['id']; ?>"
-                                        <?= $isPaid ? 'disabled' : '' ?>>
+                                        <?= $rowLocked ? 'disabled' : '' ?>>
                                 </td>
                                 <td data-order="<?= $sno; ?>"><?= $sno++; ?></td>
                                 <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
@@ -581,7 +582,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                                     <strong><?= $isPaid ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'; ?></strong>
                                 </td>
                                 <td>
-                                    <?php if ($isPaid): ?>
+                                    <?php if ($rowLocked): ?>
                                         <span class="label label-success earning-locked-label">
                                             <i class="entypo-lock"></i> Locked
                                         </span>
@@ -644,6 +645,8 @@ $form_range_label = week_range_label($current_start, $current_end);
     <script src="<?= $base_url ?>assets/js/delivery_earnings.js"></script>
 
     <script type="text/javascript">
+        var CAN_UNLOCK_PAID = <?= isSuperAdmin() ? 'true' : 'false' ?>;
+
         jQuery(document).ready(function ($) {
             /*
              * This DataTables Buttons build has no format.body support.
@@ -700,11 +703,20 @@ $form_range_label = week_range_label($current_start, $current_end);
 
             function lockRow($row) {
                 $row.addClass('earning-row-paid');
-                $row.find('.earning-checkbox').prop('checked', false).prop('disabled', true);
-                $row.find('td:last').html(
-                    '<span class="label label-success earning-locked-label"><i class="entypo-lock"></i> Locked</span>'
-                );
+                $row.find('.earning-checkbox').prop('checked', false);
+                if (!CAN_UNLOCK_PAID) {
+                    $row.find('.earning-checkbox').prop('disabled', true);
+                    $row.find('td:last').html(
+                        '<span class="label label-success earning-locked-label"><i class="entypo-lock"></i> Locked</span>'
+                    );
+                }
                 setRowStatus($row, 1);
+            }
+
+            function unlockRow($row) {
+                $row.removeClass('earning-row-paid');
+                $row.find('.earning-checkbox').prop('disabled', false);
+                setRowStatus($row, 0);
             }
 
             $('#selectAllEarnings').on('change', function () {
@@ -720,13 +732,15 @@ $form_range_label = week_range_label($current_start, $current_end);
                 }).get();
 
                 $.post('ajax/update_earning_status', { ids: ids, status: status }, function (res) {
-                    if (res === 'success') {
+                    if (res === 'denied') {
+                        toastr.error('Only Super Admin can unlock paid records.');
+                    } else if (res === 'success') {
                         ids.forEach(function (id) {
                             var $row = $('.earning-checkbox[value="' + id + '"]').closest('tr');
                             if (status == 1) {
                                 lockRow($row);
                             } else {
-                                setRowStatus($row, 0);
+                                unlockRow($row);
                             }
                         });
                         updateSelectionState();

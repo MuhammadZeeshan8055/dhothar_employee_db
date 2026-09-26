@@ -14,7 +14,18 @@ if ($idList === '') {
     exit;
 }
 
-$update = $obj->update('delivery_earnings', ['status' => $status], "id IN ($idList) AND status != 1");
+if ($status === 1) {
+    // Mark unpaid rows as paid
+    $update = $obj->update('delivery_earnings', ['status' => 1], "id IN ($idList) AND status != 1");
+} else {
+    // Mark paid rows as unpaid — Super Admin only (unlock)
+    if (!isSuperAdmin()) {
+        echo "denied";
+        exit;
+    }
+
+    $update = $obj->update('delivery_earnings', ['status' => 0], "id IN ($idList) AND status = 1");
+}
 
 echo $update ? "success" : "error";
 

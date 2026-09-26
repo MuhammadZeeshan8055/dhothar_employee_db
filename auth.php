@@ -1,8 +1,10 @@
 <?php
 
 /**
- * Authentication helpers.
- * Session keys: logged_in, user (id, name, email, role)
+ * Auth + roles (3 only):
+ * Super Admin  - all pages, can edit/delete/unlock paid earnings
+ * Admin        - all pages, paid earnings locked
+ * Rate Manager - delivery_settings only
  */
 
 function isLoggedIn()
@@ -19,6 +21,21 @@ function getUserRole()
 {
     $user = getCurrentUser();
     return $user ? $user['role'] : '';
+}
+
+function isSuperAdmin()
+{
+    return getUserRole() === 'Super Admin';
+}
+
+function isRateManager()
+{
+    return getUserRole() === 'Rate Manager';
+}
+
+function getHomePage()
+{
+    return isRateManager() ? 'delivery_settings' : 'index';
 }
 
 function setAuthUser(array $user)
@@ -42,10 +59,7 @@ function clearAuthUser()
 
 function isPublicPage()
 {
-    $publicPages = ['login.php', 'logout.php'];
-    $currentScript = basename($_SERVER['SCRIPT_NAME']);
-
-    return in_array($currentScript, $publicPages, true);
+    return in_array(basename($_SERVER['SCRIPT_NAME']), ['login.php', 'logout.php'], true);
 }
 
 function isAjaxRequest()
@@ -67,15 +81,34 @@ function requireAuth()
     if (isAjaxRequest()) {
         header('Content-Type: application/json');
         http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Session expired. Please login again.',
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Session expired. Please login again.']);
         exit;
     }
 
     header('Location: ' . $GLOBALS['base_url'] . 'login');
     exit;
+}
+
+function requirePageAccess()
+{
+    if (isPublicPage()) {
+        return;
+    }
+
+    $page = basename($_SERVER['SCRIPT_NAME'], '.php');
+
+    // Rate Manager: only rate settings page (+ ajax it needs)
+    if (isRateManager() && !in_array($page, ['delivery_settings', 'get_employee_rates'], true)) {
+        if (isAjaxRequest()) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied.']);
+            exit;
+        }
+
+        header('Location: ' . $GLOBALS['base_url'] . 'delivery_settings');
+        exit;
+    }
 }
 
 function attemptLogin($email, $password, Database $db)

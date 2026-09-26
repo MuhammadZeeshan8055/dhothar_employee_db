@@ -15,6 +15,7 @@ $userrole = getUserRole();
 
 if (!isPublicPage()) {
     requireAuth();
+    requirePageAccess();
 }
 
 function pr($data)

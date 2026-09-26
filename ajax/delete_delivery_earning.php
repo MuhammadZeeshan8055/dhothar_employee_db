@@ -14,7 +14,7 @@ if ($id <= 0) {
 $obj->select("delivery_earnings", "status", null, "id = $id", null, 1);
 $row = $obj->getResult();
 
-if (!empty($row) && (int) $row[0]['status'] === 1) {
+if (!empty($row) && (int) $row[0]['status'] === 1 && !isSuperAdmin()) {
     echo "locked";
     exit;
 }
@@ -22,3 +22,5 @@ if (!empty($row) && (int) $row[0]['status'] === 1) {
 $delete = $obj->delete("delivery_earnings", "id=$id");
 
 echo $delete ? "success" : "error";
+
+?>

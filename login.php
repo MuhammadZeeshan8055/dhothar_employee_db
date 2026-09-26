@@ -3,7 +3,7 @@
 include('session.php');
 
 if (isLoggedIn()) {
-    header('Location: ' . $base_url . 'index');
+    header('Location: ' . $base_url . getHomePage());
     exit;
 }
 
@@ -16,7 +16,7 @@ if (isset($_POST['login'])) {
     $result = attemptLogin($_POST['email'] ?? '', $_POST['password'] ?? '', $obj);
 
     if ($result['success']) {
-        header('Location: ' . $base_url . 'index');
+        header('Location: ' . $base_url . getHomePage());
         exit;
     }
 

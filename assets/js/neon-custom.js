@@ -1485,18 +1485,13 @@ function setup_sidebar_menu()
 				});
 			}*/
 
-			if( ! $this.hasClass(submenu_options.submenu_opened_class))
+			if( $this.hasClass(submenu_options.submenu_opened_class))
 			{
-				var current_height;
-
-				if( ! $submenu.is(':visible'))
-				{
-					menu_do_expand($submenu, $this, submenu_options);
-				}
+				menu_do_collapse($submenu, $this, submenu_options);
 			}
 			else
 			{
-				menu_do_collapse($submenu, $this, submenu_options);
+				menu_do_expand($submenu, $this, submenu_options);
 			}
 		});
 
