@@ -144,21 +144,11 @@ $obj->select(
     $earningsWhere,
     'delivery_earnings.week_year ASC, delivery_earnings.week_number ASC, delivery_earnings.id ASC'
 );
-$earningsAll = enrich_earnings_with_vehicle($obj, $obj->getResult() ?: []);
-$rentByCompany = build_rent_by_company_summary($earningsAll);
-
-$earnings = $earningsAll;
+$earnings = enrich_earnings_with_vehicle($obj, $obj->getResult() ?: []);
 if ($filter_vehicle_company !== '') {
     $earnings = array_values(array_filter($earnings, function ($row) use ($filter_vehicle_company) {
         return ($row['vehicle_company_key'] ?? '') === $filter_vehicle_company;
     }));
-}
-
-$grand_sc_rent = 0;
-$grand_employees = 0;
-foreach ($rentByCompany as $group) {
-    $grand_sc_rent += (float) $group['total_sc'];
-    $grand_employees += (int) $group['employees'];
 }
 
 $vehicleCompanies = vehicle_company_filter_options($obj);
@@ -441,54 +431,6 @@ $form_range_label = week_range_label($current_start, $current_end);
                 </div>
             </div>
 
-            <?php if (!empty($rentByCompany)): ?>
-                <div class="rent-by-company-wrap">
-                    <h4>Rent by Vehicle Company</h4>
-                    <table class="table table-bordered table-sm" id="rent-by-company">
-                        <thead>
-                            <tr>
-                                <th>Vehicle Company</th>
-                                <th>Employees</th>
-                                <th>Total Vehicle Rent</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($rentByCompany as $group): ?>
-                                <?php
-                                $isActive = $filter_vehicle_company !== '' && $filter_vehicle_company === $group['key'];
-                                $rowUrl = delivery_earnings_filter_url(
-                                    $base_url,
-                                    $filter_year,
-                                    $filter_week,
-                                    $group['key']
-                                );
-                                ?>
-                                <tr class="rent-company-row<?= $isActive ? ' active-company' : ''; ?>">
-                                    <td>
-                                        <a href="<?= htmlspecialchars($rowUrl); ?>">
-                                            <?= htmlspecialchars($group['label']); ?>
-                                        </a>
-                                    </td>
-                                    <td><?= (int) $group['employees']; ?></td>
-                                    <td><?= number_format((float) $group['total_sc'], 2); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <tr>
-                                <td><strong>Total</strong></td>
-                                <td><strong><?= $grand_employees; ?></strong></td>
-                                <td><strong><?= number_format($grand_sc_rent, 2); ?></strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="rent-filter-hint">
-                        Click a company to filter the table below.
-                        <?php if ($filter_vehicle_company !== ''): ?>
-                            <a href="<?= htmlspecialchars(delivery_earnings_filter_url($base_url, $filter_year, $filter_week)); ?>">Show all companies</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <h3>Delivery Earnings<?= $filter_vehicle_company !== '' ? ' — ' . htmlspecialchars(vehicle_company_label($filter_vehicle_company)) : ''; ?></h3>
             <br />
 
@@ -512,8 +454,6 @@ $form_range_label = week_range_label($current_start, $current_end);
                         <th>Employee</th>
                         <th>Company</th>
                         <th>Service Provider</th>
-                        <th>Vehicle Type</th>
-                        <th>Vehicle Company</th>
                         <th>Year</th>
                         <th>Week</th>
                         <th>Date Range</th>
@@ -557,8 +497,6 @@ $form_range_label = week_range_label($current_start, $current_end);
                                 <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['company_name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
-                                <td><?= htmlspecialchars($row['vehicle_type'] ?? ''); ?></td>
-                                <td><?= htmlspecialchars($row['vehicle_company_name'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= htmlspecialchars($row['week_year'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= !empty($row['week_number']) ? 'Week ' . (int) $row['week_number'] : ''; ?></td>
                                 <td><?= htmlspecialchars($rangeLabel); ?></td>

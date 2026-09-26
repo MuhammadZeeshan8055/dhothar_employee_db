@@ -73,6 +73,26 @@ $employees = $obj->getResult();
 
 $form_range_label = week_range_label($current_start, $current_end);
 
+$summary_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : $current_year;
+$summary_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : $current_week;
+
+$obj->select(
+    'delivery_earnings',
+    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name',
+    'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
+    "delivery_earnings.week_year = {$summary_year} AND delivery_earnings.week_number = {$summary_week}",
+    'delivery_earnings.id ASC'
+);
+$earningsForSummary = enrich_earnings_with_vehicle($obj, $obj->getResult() ?: []);
+$rentByCompany = build_rent_by_company_summary($earningsForSummary);
+
+$grand_sc_rent = 0;
+$grand_employees = 0;
+foreach ($rentByCompany as $group) {
+    $grand_sc_rent += (float) $group['total_sc'];
+    $grand_employees += (int) $group['employees'];
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -305,6 +325,37 @@ $form_range_label = week_range_label($current_start, $current_end);
                                     </div>
                                 </div>
                             </form>
+
+                            <?php if (!empty($rentByCompany)): ?>
+                                <hr>
+                                <div class="rent-by-company-wrap">
+                                    <h4>Rent by Vehicle Company — Week <?= (int) $summary_week; ?> / <?= (int) $summary_year; ?></h4>
+                                    <table class="table table-bordered table-sm" id="rent-by-company">
+                                        <thead>
+                                            <tr>
+                                                <th>Vehicle Company</th>
+                                                <th>Employees</th>
+                                                <th>Total Vehicle Rent</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($rentByCompany as $group): ?>
+                                                <tr class="rent-company-row">
+                                                    <td><?= htmlspecialchars($group['label']); ?></td>
+                                                    <td><?= (int) $group['employees']; ?></td>
+                                                    <td><?= number_format((float) $group['total_sc'], 2); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                            <tr>
+                                                <td><strong>Total</strong></td>
+                                                <td><strong><?= $grand_employees; ?></strong></td>
+                                                <td><strong><?= number_format($grand_sc_rent, 2); ?></strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <?php /* Click a company to view filtered earnings. View all earnings for this week */ ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
