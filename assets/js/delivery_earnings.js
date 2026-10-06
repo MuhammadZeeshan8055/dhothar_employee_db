@@ -302,6 +302,11 @@
 
         refreshDateRange();
 
+        // A missing-earnings link can open this page with employee/week preselected.
+        if ($employee.val()) {
+            loadRates($employee.val());
+        }
+
         // Load row into the form (same as picking employee + year + week)
         $(document).on('click', '.edit-earning-btn', function () {
             var employeeId = String($(this).data('employee-id') || '');

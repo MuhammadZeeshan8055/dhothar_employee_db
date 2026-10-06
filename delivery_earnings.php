@@ -15,7 +15,20 @@ $obj = new Database();
 
 $current_year = (int) date('o');   // ISO year
 $current_week = (int) date('W');   // ISO week
-list($current_start, $current_end) = iso_week_range($current_year, $current_week);
+$form_employee_id = (int) ($_GET['employee_id'] ?? 0);
+$form_year = (int) ($_GET['week_year'] ?? $current_year);
+$form_week = (int) ($_GET['week_number'] ?? $current_week);
+
+if ($form_year < 2000 || $form_year > 2100) {
+    $form_year = $current_year;
+}
+
+$form_max_week = iso_weeks_in_year($form_year);
+if ($form_week < 1 || $form_week > $form_max_week) {
+    $form_week = $current_week;
+}
+
+list($current_start, $current_end) = iso_week_range($form_year, $form_week);
 
 // ---------------------------------------------------------------------------
 // SAVE / UPDATE
@@ -153,6 +166,56 @@ if ($filter_vehicle_company !== '') {
 
 $vehicleCompanies = vehicle_company_filter_options($obj);
 
+// Use the selected table filter for the progress cards. Without a filter,
+// show progress for the week currently selected in the earnings form.
+$progress_year = $filter_year ?: $form_year;
+$progress_week = $filter_week ?: $form_week;
+
+// An employee is eligible when they have settings for this week or any earlier
+// week. get_rate_settings_for_week() also supports old settings without a week.
+$weekRateSettings = [];
+foreach ($employees as $employee) {
+    $employeeId = (int) ($employee['id'] ?? 0);
+    $rateResult = get_rate_settings_for_week($obj, $employeeId, $progress_year, $progress_week);
+
+    if (!$rateResult) {
+        continue;
+    }
+
+    $settingRow = $rateResult['data'];
+    $settingRow['employee_id'] = $employeeId;
+    $settingRow['name'] = $employee['name'] ?? '';
+    $settingRow['company_name'] = $employee['company_name'] ?? '';
+    $settingRow['rate_source'] = $rateResult['source'];
+    $settingRow['source_year'] = $rateResult['source_year'];
+    $settingRow['source_week'] = $rateResult['source_week'];
+    $weekRateSettings[] = $settingRow;
+}
+
+$obj->select(
+    'delivery_earnings',
+    'employee_id',
+    null,
+    "week_year = {$progress_year} AND week_number = {$progress_week}"
+);
+$weekEarningRows = $obj->getResult() ?: [];
+
+$weekEarningEmployeeIds = [];
+foreach ($weekEarningRows as $earningRow) {
+    $weekEarningEmployeeIds[(int) ($earningRow['employee_id'] ?? 0)] = true;
+}
+
+$missingEarnings = [];
+foreach ($weekRateSettings as $settingRow) {
+    $employeeId = (int) ($settingRow['employee_id'] ?? 0);
+    if ($employeeId > 0 && empty($weekEarningEmployeeIds[$employeeId])) {
+        $missingEarnings[] = $settingRow;
+    }
+}
+
+$totalRateSettings = count($weekRateSettings);
+$totalRemainingEarnings = count($missingEarnings);
+
 $form_range_label = week_range_label($current_start, $current_end);
 ?>
 <!DOCTYPE html>
@@ -276,7 +339,8 @@ $form_range_label = week_range_label($current_start, $current_end);
                                                     data-allow-clear="true" data-placeholder="Search employee..." required>
                                                     <option value=""></option>
                                                     <?php foreach ($employees as $emp): ?>
-                                                        <option value="<?= (int) $emp['id']; ?>">
+                                                        <option value="<?= (int) $emp['id']; ?>"
+                                                            <?= (int) $emp['id'] === $form_employee_id ? 'selected' : ''; ?>>
                                                             <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '')); ?>
                                                         </option>
                                                     <?php endforeach; ?>
@@ -286,13 +350,13 @@ $form_range_label = week_range_label($current_start, $current_end);
                                             <div class="col-md-2">
                                                 <label class="control-label">Year</label>
                                                 <select name="week_year" id="week_year" class="form-control" required>
-                                                    <?= year_options_html($current_year, $current_year); ?>
+                                                    <?= year_options_html($form_year, $current_year); ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="control-label">Week</label>
                                                 <select name="week_number" id="week_number" class="form-control" required>
-                                                    <?= week_options_html($current_week, $current_year); ?>
+                                                    <?= week_options_html($form_week, $form_year); ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-3">
@@ -427,6 +491,87 @@ $form_range_label = week_range_label($current_start, $current_end);
                         <button type="submit" class="btn btn-primary btn-sm" style="margin-right: 6px;">Apply</button>
                         <a href="delivery_earnings" class="btn btn-default btn-sm">Clear</a>
                     </form>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="row" style="display:flex;justify-content:center;flex-wrap:wrap;">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="tile-stats tile-green">
+                                <div class="icon"><i class="entypo-chart-bar"></i></div>
+                                <div class="num" data-start="0" data-end="<?= $totalRateSettings; ?>" data-postfix=""
+                                    data-duration="1500" data-delay="600"><?= $totalRateSettings; ?></div>
+                                <h3>Employees With Rate Settings — Week <?= (int) $progress_week; ?> / <?= (int) $progress_year; ?></h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <a href="#missingEarningsModal" data-toggle="modal" style="display:block;color:inherit;">
+                                <div class="tile-stats tile-red" style="cursor:pointer;">
+                                    <div class="icon"><i class="entypo-users"></i></div>
+                                    <div class="num" data-start="0" data-end="<?= $totalRemainingEarnings; ?>" data-postfix=""
+                                        data-duration="1500" data-delay="0"><?= $totalRemainingEarnings; ?></div>
+                                    <h3>Remaining Earnings — Week <?= (int) $progress_week; ?> / <?= (int) $progress_year; ?></h3>
+                                    <p style="margin:8px 0 0;color:#fff;">Click to view employees</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="missingEarningsModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">
+                                Missing Earnings — Week <?= (int) $progress_week; ?> / <?= (int) $progress_year; ?>
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <?php if (empty($missingEarnings)): ?>
+                                <div class="alert alert-success" style="margin-bottom:0;">
+                                    Earnings have been entered for all employees with rate settings for this week.
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" style="margin-bottom:0;">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Employee</th>
+                                                <th>Company</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($missingEarnings as $index => $employee): ?>
+                                                <tr>
+                                                    <td><?= $index + 1; ?></td>
+                                                    <td><?= htmlspecialchars($employee['name'] ?? ''); ?></td>
+                                                    <td><?= htmlspecialchars($employee['company_name'] ?? ''); ?></td>
+                                                    <td>
+                                                        <a class="btn btn-success btn-xs"
+                                                            href="delivery_earnings?<?= htmlspecialchars(http_build_query([
+                                                                'employee_id' => (int) ($employee['employee_id'] ?? 0),
+                                                                'week_year' => (int) $progress_year,
+                                                                'week_number' => (int) $progress_week,
+                                                            ])); ?>">
+                                                            Add Earnings
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
