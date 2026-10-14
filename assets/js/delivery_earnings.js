@@ -11,7 +11,7 @@
     'use strict';
 
     var rates = null;      // employee rate settings
-    var prevCarry = 0;     // negative from earlier week, or 0
+    var prevCarry = 0;     // unpaid balance from earlier week, or 0
 
     function toNum(val) {
         var n = parseFloat(val);

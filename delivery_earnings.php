@@ -61,7 +61,7 @@ if (isset($_POST['save_delivery_earning'])) {
     }
     $rates = $rateResult['data'];
 
-    // Previous week negative (if any)
+    // Previous week unpaid balance (if any) rolls forward until paid/locked
     $carry = get_prev_carry($obj, $employee_id, $week_year, $week_number);
     $calc = calculate_week_earning($earning, $cash_in_hand, $app_tax, $others, $rates, $carry['prev_carry']);
 
@@ -114,8 +114,8 @@ if (isset($_POST['save_delivery_earning'])) {
         ? "Week {$week_number} updated successfully!"
         : 'Delivery earning saved successfully!';
 
-    if ($calc['prev_carry'] < 0) {
-        $msg .= ' Previous negative ' . number_format($calc['prev_carry'], 2) . ' adjusted.';
+    if ($calc['prev_carry'] != 0.0) {
+        $msg .= ' Previous unpaid ' . number_format($calc['prev_carry'], 2) . ' carried forward.';
     }
     if ($cascaded > 0) {
         $msg .= " Updated {$cascaded} later week(s) carry.";

@@ -7,7 +7,9 @@
  *   total_earning = earning - commission - cash_in_hand - app_tax
  *   tax / sc     = % or fixed of total_earning
  *   week_balance = total_earning - tax - sc - others
- *   total_balance = week_balance + prev_carry   (prev_carry is 0 or negative)
+ *   total_balance = week_balance + prev_carry
+ *   prev_carry    = previous week's total_balance while that week is unpaid;
+ *                   clears when the previous week is marked paid/locked
  */
 
 /** Format amount for DB insert/update (2 decimals). */
@@ -58,7 +60,7 @@ function week_range_label($start, $end)
 /**
  * Run all earning calculations for one week.
  * $rates = row from employee_rate_settings
- * $prev_carry = negative balance from a previous week (or 0)
+ * $prev_carry = unpaid balance carried from a previous week (or 0)
  */
 function calculate_week_earning($earning, $cash_in_hand, $app_tax, $others, $rates, $prev_carry = 0)
 {
@@ -93,8 +95,9 @@ function empty_carry()
 }
 
 /**
- * If the latest earlier week for this employee has a negative total_balance,
- * that amount carries into the current week.
+ * If the latest earlier week for this employee is still unpaid,
+ * its total_balance carries into the current week (positive or negative).
+ * Once that week is marked paid/locked, carry stops.
  */
 function get_prev_carry($obj, $employee_id, $week_year, $week_number)
 {
@@ -113,21 +116,25 @@ function get_prev_carry($obj, $employee_id, $week_year, $week_number)
         return empty_carry();
     }
 
-    $prev_balance = (float) ($rows[0]['total_balance'] ?? 0);
-    if ($prev_balance >= 0) {
+    // Paid/locked weeks do not roll forward
+    if ((int) ($rows[0]['status'] ?? 0) === 1) {
+        return empty_carry();
+    }
+
+    $prev_balance = round((float) ($rows[0]['total_balance'] ?? 0), 2);
+    if ($prev_balance == 0.0) {
         return empty_carry();
     }
 
     $from_week = (int) $rows[0]['week_number'];
     $from_year = (int) $rows[0]['week_year'];
-    $prev_carry = round($prev_balance, 2);
 
     return [
-        'prev_carry' => $prev_carry,
+        'prev_carry' => $prev_balance,
         'from_week' => $from_week,
         'from_year' => $from_year,
-        'note' => "Week {$from_week} ({$from_year}) negative "
-            . number_format($prev_carry, 2) . ' adjusting in this week.',
+        'note' => "Week {$from_week} ({$from_year}) unpaid "
+            . number_format($prev_balance, 2) . ' carried into this week.',
     ];
 }
 
