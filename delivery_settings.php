@@ -311,6 +311,8 @@ foreach ($rentByCompany as $group) {
                                                     <option value="uny_mobility_srl">UNY MOBILITY SRL</option>
                                                     <option value="kiris_rent_srl">KIRIS RENT SRL</option>
                                                     <option value="rbj_brothers_srl">RBJ BROTHERS SRL</option>
+                                                    <option value="pasio">PASIO</option>
+                                                    <option value="phoenix_car_rental">Phoenix car rental</option>
                                                     <option value="own_car">Own Car</option>
                                                 </select>
                                             </div>
