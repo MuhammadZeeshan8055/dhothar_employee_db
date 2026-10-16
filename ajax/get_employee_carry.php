@@ -1,6 +1,6 @@
 <?php
 /**
- * AJAX: previous-week negative carry only.
+ * AJAX: previous-week unpaid carry.
  * Prefer ajax/get_week_earning which also loads edit data.
  */
 
