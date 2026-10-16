@@ -237,7 +237,8 @@ if (isset($_POST['update_employee'])) {
                                                         "RENT WITH ME S.R.L",
                                                         "DHOTHAR HR SERVICES S.R.L",
                                                         "DHOTHAR INTERNATINOAL IMPEX S.R.L",
-                                                        "DIG LOGISTICS S.R.L"
+                                                        "DIG LOGISTICS S.R.L",
+                                                        "PASIO",
                                                     ];
                                                     foreach ($companies as $c) {
                                                         $selected = ($emp['company_name'] == $c) ? 'selected' : '';

@@ -225,6 +225,7 @@ if (isset($_POST['add_employee'])) {
                                                     <option value="DHOTHAR HR SERVICES S.R.L">DHOTHAR HR SERVICES S.R.L</option>
                                                     <option value="DHOTHAR INTERNATINOAL IMPEX S.R.L">DHOTHAR INTERNATINOAL IMPEX S.R.L</option>
                                                     <option value="DIG LOGISTICS S.R.L">DIG LOGISTICS S.R.L</option>
+                                                    <option value="PASIO">PASIO</option>
                                                 </select>
                                             </div>
 
