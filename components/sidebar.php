@@ -1,6 +1,6 @@
 <?php
 $current_page = basename($_SERVER['SCRIPT_NAME'], '.php');
-$employee_pages = ['add_employee', 'manage_employee', 'employee_edit', 'delivery_settings', 'delivery_earnings'];
+$employee_pages = ['add_employee', 'manage_employee', 'employee_edit', 'delivery_settings', 'delivery_earnings', 'ride_sharing_settings', 'ride_sharing_earnings'];
 $is_employee_section = in_array($current_page, $employee_pages, true);
 $is_dashboard = ($current_page === 'index');
 $is_rate_manager = isRateManager();
@@ -63,6 +63,18 @@ $is_rate_manager = isRateManager();
                 <li class="<?= $current_page === 'delivery_earnings' ? 'active' : '' ?>">
                     <a href="delivery_earnings">
                         <span class="title">Delivery Earnings</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'ride_sharing_settings' ? 'active' : '' ?>">
+                    <a href="ride_sharing_settings">
+                        <span class="title">Ride Sharing Settings</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'ride_sharing_earnings' ? 'active' : '' ?>">
+                    <a href="ride_sharing_earnings">
+                        <span class="title">Ride Sharing Earnings</span>
                     </a>
                 </li>
             </ul>
