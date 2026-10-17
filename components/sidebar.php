@@ -56,7 +56,7 @@ $is_rate_manager = isRateManager();
 
                 <li class="<?= $current_page === 'delivery_settings' ? 'active' : '' ?>">
                     <a href="delivery_settings">
-                        <span class="title">Employee Rate Settings</span>
+                        <span class="title">Delivery rate setting</span>
                     </a>
                 </li>
 
@@ -68,7 +68,7 @@ $is_rate_manager = isRateManager();
 
                 <li class="<?= $current_page === 'ride_sharing_settings' ? 'active' : '' ?>">
                     <a href="ride_sharing_settings">
-                        <span class="title">Ride Sharing Settings</span>
+                        <span class="title">Ridesharing rate setting</span>
                     </a>
                 </li>
 
