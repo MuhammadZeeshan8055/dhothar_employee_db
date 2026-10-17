@@ -34,6 +34,7 @@ if (isset($_POST['save_ride_sharing_settings'])) {
         'week_start' => $week_start,
         'week_end' => $week_end,
         'commission_rate' => money_db($_POST['commission_rate'] ?? 10),
+        'vehicle_company_name' => $_POST['vehicle_company_name'] ?? '',
         'vehicle_rent' => money_db($_POST['vehicle_rent'] ?? 0),
         'updated_at' => date('Y-m-d H:i:s'),
     ];
@@ -225,13 +226,25 @@ $savedSettings = $obj->getResult() ?: [];
                                         <hr>
 
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
                                                 <label class="control-label">Commission Rate (%)</label>
                                                 <input type="number" step="0.01" min="0" name="commission_rate" id="commission_rate"
                                                     class="form-control" placeholder="e.g. 10" value="10">
                                                 <small class="text-muted">Applied on Total Net (Bolt Net + Uber Net)</small>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
+                                                <label class="control-label">Vehicle Company Name</label>
+                                                <select name="vehicle_company_name" id="vehicle_company_name" class="form-control" required>
+                                                    <option value="">Select Company</option>
+                                                    <option value="uny_mobility_srl">UNY MOBILITY SRL</option>
+                                                    <option value="kiris_rent_srl">KIRIS RENT SRL</option>
+                                                    <option value="rbj_brothers_srl">RBJ BROTHERS SRL</option>
+                                                    <option value="pasio">PASIO</option>
+                                                    <option value="phoenix_car_rental">Phoenix car rental</option>
+                                                    <option value="own_car">Own Car</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
                                                 <label class="control-label">Vehicle Rent (Fixed)</label>
                                                 <input type="number" step="0.01" min="0" name="vehicle_rent" id="vehicle_rent"
                                                     class="form-control" placeholder="e.g. 500" value="0">
@@ -277,6 +290,7 @@ $savedSettings = $obj->getResult() ?: [];
                                             <th>Week</th>
                                             <th>Date Range</th>
                                             <th>Commission %</th>
+                                            <th>Vehicle Company</th>
                                             <th>Vehicle Rent</th>
                                             <th>Action</th>
                                         </tr>
@@ -295,6 +309,7 @@ $savedSettings = $obj->getResult() ?: [];
                                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= (int) ($row['week_number'] ?? 0); ?></td>
                                                 <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>
                                                 <td data-order="<?= $commissionRate; ?>"><?= num_display($commissionRate); ?></td>
+                                                <td><?= htmlspecialchars(vehicle_company_label($row['vehicle_company_name'] ?? '')); ?></td>
                                                 <td data-order="<?= $vehicleRent; ?>"><?= num_display($vehicleRent); ?></td>
                                                 <td>
                                                     <button type="button" class="btn btn-primary btn-sm edit-settings-btn"
@@ -375,7 +390,7 @@ $savedSettings = $obj->getResult() ?: [];
                 ],
                 order: [[3, 'asc'], [2, 'asc']],
                 columnDefs: [
-                    { orderable: false, targets: [7] }
+                    { orderable: false, targets: [8] }
                 ]
             });
         });

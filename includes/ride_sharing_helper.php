@@ -291,3 +291,49 @@ function ride_settings_toast($type, $message)
     header('Location: ride_sharing_settings');
     exit;
 }
+
+if (!function_exists('vehicle_company_label')) {
+    function vehicle_company_label($value)
+    {
+        $map = [
+            'uny_mobility' => 'UNY MOBILITY',
+            'uny_mobility_srl' => 'UNY MOBILITY SRL',
+            'kiris_rent_srl' => 'KIRIS RENT SRL',
+            'rbj_brothers_srl' => 'RBJ BROTHERS SRL',
+            'pasio' => 'PASIO',
+            'phoenix_car_rental' => 'Phoenix car rental',
+            'on_car' => 'On Car',
+            'own_car' => 'Own Car',
+        ];
+
+        return $map[$value] ?? $value;
+    }
+}
+
+/** Attach vehicle company from week rate settings onto earning rows. */
+function ride_enrich_earnings_with_company($obj, array $earnings)
+{
+    foreach ($earnings as $i => $row) {
+        if (empty($row['id'])) {
+            continue;
+        }
+
+        $rateResult = ride_get_rate_settings_for_week(
+            $obj,
+            (int) $row['employee_id'],
+            (int) ($row['week_year'] ?? 0),
+            (int) ($row['week_number'] ?? 0)
+        );
+
+        if ($rateResult) {
+            $key = $rateResult['data']['vehicle_company_name'] ?? '';
+            $earnings[$i]['vehicle_company_key'] = $key;
+            $earnings[$i]['vehicle_company_name'] = vehicle_company_label($key);
+        } else {
+            $earnings[$i]['vehicle_company_key'] = '';
+            $earnings[$i]['vehicle_company_name'] = '';
+        }
+    }
+
+    return $earnings;
+}

@@ -166,7 +166,7 @@ $obj->select(
     $earningsWhere,
     'ride_sharing_earnings.week_year ASC, ride_sharing_earnings.week_number ASC, ride_sharing_earnings.id ASC'
 );
-$earnings = $obj->getResult() ?: [];
+$earnings = ride_enrich_earnings_with_company($obj, $obj->getResult() ?: []);
 
 $progress_year = $filter_year ?: $form_year;
 $progress_week = $filter_week ?: $form_week;
@@ -566,6 +566,7 @@ foreach ($earnings as $row) {
                         <th>Uber Payout</th>
                         <th>Total Net</th>
                         <th class="deduction-label">Commission</th>
+                        <th>Vehicle Company</th>
                         <th class="deduction-label">Vehicle Rent</th>
                         <th>Total Payout</th>
                         <th>Balance</th>
@@ -603,6 +604,7 @@ foreach ($earnings as $row) {
                                 <td data-order="<?= (float) $row['uber_payout']; ?>"><?= num_display($row['uber_payout']); ?></td>
                                 <td data-order="<?= (float) $row['total_net']; ?>"><?= num_display($row['total_net']); ?></td>
                                 <td data-order="<?= (float) $row['commission']; ?>"><?= num_display($row['commission']); ?></td>
+                                <td><?= htmlspecialchars($row['vehicle_company_name'] ?? ''); ?></td>
                                 <td data-order="<?= (float) $row['vehicle_rent']; ?>"><?= num_display($row['vehicle_rent']); ?></td>
                                 <td data-order="<?= (float) $row['total_payout']; ?>"><?= num_display($row['total_payout']); ?></td>
                                 <td data-order="<?= (float) $row['balance']; ?>"><?= num_display($row['balance']); ?></td>
@@ -653,6 +655,7 @@ foreach ($earnings as $row) {
                         <th><?= num_display($totals['uber_payout']); ?></th>
                         <th><?= num_display($totals['total_net']); ?></th>
                         <th><?= num_display($totals['commission']); ?></th>
+                        <th></th>
                         <th><?= num_display($totals['vehicle_rent']); ?></th>
                         <th><?= num_display($totals['total_payout']); ?></th>
                         <th><?= num_display($totals['balance']); ?></th>
@@ -730,7 +733,7 @@ foreach ($earnings as $row) {
                 ],
                 order: [[3, 'desc'], [4, 'desc']],
                 columnDefs: [
-                    { orderable: false, targets: [0, 19] }
+                    { orderable: false, targets: [0, 20] }
                 ]
             });
 

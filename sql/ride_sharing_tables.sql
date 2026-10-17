@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `ride_sharing_rate_settings` (
   `week_start` date DEFAULT NULL,
   `week_end` date DEFAULT NULL,
   `commission_rate` decimal(10,2) NOT NULL DEFAULT 10.00 COMMENT 'Percent of Total Net',
+  `vehicle_company_name` varchar(100) DEFAULT NULL,
   `vehicle_rent` decimal(10,2) NOT NULL DEFAULT 0.00,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,

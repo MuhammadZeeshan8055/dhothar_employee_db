@@ -75,6 +75,7 @@
 
     function clearForm() {
         $('#commission_rate').val('10');
+        $('#vehicle_company_name').val('');
         $('#vehicle_rent').val('0');
         $('#submitSettingsBtn').text('Submit Details').removeClass('btn-primary').addClass('btn-success');
         $('#rateInfo').text('Select employee and week to load rate settings.');
@@ -83,6 +84,7 @@
 
     function fillForm(data, meta) {
         $('#commission_rate').val(data.commission_rate);
+        $('#vehicle_company_name').val(data.vehicle_company_name || '');
         $('#vehicle_rent').val(data.vehicle_rent);
 
         if (meta && meta.source === 'exact') {
@@ -105,10 +107,15 @@
         var week = $('#week_number').val();
         var range = $('#week_date_range').val();
         var commission = $('#commission_rate').val() || '0';
+        var company = $('#vehicle_company_name option:selected').text() || '-';
+        if (!company || company.indexOf('Select') === 0) {
+            company = '-';
+        }
         var rent = $('#vehicle_rent').val() || '0';
 
         var html = employeeName()
             + ' — Commission <strong>' + commission + '%</strong> of Total Net, '
+            + 'Company <strong>' + company + '</strong>, '
             + 'Vehicle Rent <strong>' + rent + '</strong>. '
             + 'Week <strong>' + week + '</strong> (' + range + ').';
 
