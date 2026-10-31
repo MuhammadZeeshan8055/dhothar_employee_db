@@ -1,7 +1,7 @@
 /**
  * Ride sharing earnings form JS
  *
- * Manual: Bolt Net, Bolt Payout, Uber Net, Uber Payout, Tax
+ * Manual: Bolt Net, Bolt Payout, Uber Net, Uber Payout, Tax, Others
  * From settings: Commission %, Vehicle Rent
  * Auto: Total Net, Commission, Total Payout, Balance, Final Balance, Total Balance
  */
@@ -75,7 +75,7 @@
     }
 
     function clearInputs() {
-        $('#bolt_net, #bolt_payout, #uber_net, #uber_payout, #tax').val('0');
+        $('#bolt_net, #bolt_payout, #uber_net, #uber_payout, #tax, #others').val('0');
     }
 
     function fillInputs(data) {
@@ -84,6 +84,7 @@
         $('#uber_net').val(data.uber_net != null ? data.uber_net : '0');
         $('#uber_payout').val(data.uber_payout != null ? data.uber_payout : '0');
         $('#tax').val(data.tax != null ? data.tax : '0');
+        $('#others').val(data.others != null ? data.others : '0');
     }
 
     function refreshDateRange() {
@@ -118,6 +119,7 @@
         var uberNet = toNum($('#uber_net').val());
         var uberPayout = toNum($('#uber_payout').val());
         var tax = toNum($('#tax').val());
+        var others = toNum($('#others').val());
 
         var totalNet = boltNet + uberNet;
         var commission = 0;
@@ -130,7 +132,7 @@
 
         var totalPayout = boltPayout + uberPayout;
         var balance = totalPayout - commission - vehicleRent;
-        var weekBalance = balance - tax;
+        var weekBalance = balance - tax - others;
         var totalBalance = weekBalance + prevCarry;
 
         $('#total_net').val(money(totalNet));

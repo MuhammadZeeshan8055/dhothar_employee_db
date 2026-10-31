@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `ride_sharing_earnings` (
   `total_payout` decimal(12,2) NOT NULL DEFAULT 0.00,
   `balance` decimal(12,2) NOT NULL DEFAULT 0.00,
   `tax` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `others` decimal(12,2) NOT NULL DEFAULT 0.00,
   `week_balance` decimal(12,2) NOT NULL DEFAULT 0.00,
   `prev_carry` decimal(12,2) NOT NULL DEFAULT 0.00,
   `adjustment_note` text,

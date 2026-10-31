@@ -7,7 +7,7 @@
  *   commission    = % of total_net (from settings)
  *   total_payout  = bolt_payout + uber_payout
  *   balance       = total_payout - commission - vehicle_rent
- *   week_balance  = balance - tax
+ *   week_balance  = balance - tax - others
  *   total_balance = week_balance + prev_carry
  *   prev_carry    = previous week's total_balance while unpaid;
  *                   clears when that week is marked paid/locked
@@ -84,13 +84,14 @@ if (!function_exists('num_display')) {
 }
 
 /** Run ride-sharing week calculations. $rates = row from ride_sharing_rate_settings */
-function calculate_ride_week($bolt_net, $bolt_payout, $uber_net, $uber_payout, $tax, $rates, $prev_carry = 0)
+function calculate_ride_week($bolt_net, $bolt_payout, $uber_net, $uber_payout, $tax, $others, $rates, $prev_carry = 0)
 {
     $bolt_net = (float) $bolt_net;
     $bolt_payout = (float) $bolt_payout;
     $uber_net = (float) $uber_net;
     $uber_payout = (float) $uber_payout;
     $tax = (float) $tax;
+    $others = (float) $others;
 
     $total_net = round($bolt_net + $uber_net, 2);
     $commission_rate = (float) ($rates['commission_rate'] ?? 0);
@@ -98,7 +99,7 @@ function calculate_ride_week($bolt_net, $bolt_payout, $uber_net, $uber_payout, $
     $vehicle_rent = round((float) ($rates['vehicle_rent'] ?? 0), 2);
     $total_payout = round($bolt_payout + $uber_payout, 2);
     $balance = round($total_payout - $commission - $vehicle_rent, 2);
-    $week_balance = round($balance - $tax, 2);
+    $week_balance = round($balance - $tax - $others, 2);
     $prev_carry = round((float) $prev_carry, 2);
     $total_balance = round($week_balance + $prev_carry, 2);
 

@@ -44,6 +44,7 @@ if (isset($_POST['save_ride_sharing_earning'])) {
     $uber_net = (float) ($_POST['uber_net'] ?? 0);
     $uber_payout = (float) ($_POST['uber_payout'] ?? 0);
     $tax = (float) ($_POST['tax'] ?? 0);
+    $others = (float) ($_POST['others'] ?? 0);
 
     if ($employee_id <= 0) {
         ride_earning_toast('error', 'Please select an employee.');
@@ -69,6 +70,7 @@ if (isset($_POST['save_ride_sharing_earning'])) {
         $uber_net,
         $uber_payout,
         $tax,
+        $others,
         $rates,
         $carry['prev_carry']
     );
@@ -97,6 +99,7 @@ if (isset($_POST['save_ride_sharing_earning'])) {
         'total_payout' => money_db($calc['total_payout']),
         'balance' => money_db($calc['balance']),
         'tax' => money_db($tax),
+        'others' => money_db($others),
         'week_balance' => money_db($calc['week_balance']),
         'prev_carry' => money_db($calc['prev_carry']),
         'adjustment_note' => $carry['note'],
@@ -215,7 +218,7 @@ $form_range_label = week_range_label($current_start, $current_end);
 $totals = [
     'bolt_net' => 0, 'bolt_payout' => 0, 'uber_net' => 0, 'uber_payout' => 0,
     'total_net' => 0, 'commission' => 0, 'vehicle_rent' => 0, 'total_payout' => 0,
-    'balance' => 0, 'tax' => 0, 'week_balance' => 0, 'prev_carry' => 0, 'total_balance' => 0,
+    'balance' => 0, 'tax' => 0, 'others' => 0, 'week_balance' => 0, 'prev_carry' => 0, 'total_balance' => 0,
 ];
 foreach ($earnings as $row) {
     if (empty($row['id'])) {
@@ -397,7 +400,7 @@ foreach ($earnings as $row) {
                                         <hr>
 
                                         <div class="row">
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <label class="control-label">Balance <small class="text-muted">(auto)</small></label>
                                                 <input type="text" name="balance" id="balance" class="form-control calc-readonly" readonly value="0.00">
                                             </div>
@@ -405,6 +408,11 @@ foreach ($earnings as $row) {
                                                 <label class="control-label">Tax</label>
                                                 <input type="number" step="0.01" min="0" name="tax" id="tax"
                                                     class="form-control calc-input" value="0">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="control-label">Others <small class="text-muted">(deduction)</small></label>
+                                                <input type="number" step="0.01" min="0" name="others" id="others"
+                                                    class="form-control calc-input" value="0" placeholder="e.g. 80">
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="control-label">Final Balance <small class="text-muted">(auto)</small></label>
@@ -415,7 +423,7 @@ foreach ($earnings as $row) {
                                                 <input type="text" id="prev_carry_display" class="form-control calc-readonly" readonly value="0.00">
                                                 <input type="hidden" name="prev_carry" id="prev_carry" value="0">
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <label class="control-label">Total Balance <small class="text-muted">(auto)</small></label>
                                                 <input type="text" name="total_balance" id="total_balance"
                                                     class="form-control calc-readonly total-highlight" readonly value="0.00">
@@ -571,6 +579,7 @@ foreach ($earnings as $row) {
                         <th>Total Payout</th>
                         <th>Balance</th>
                         <th>Tax</th>
+                        <th>Others</th>
                         <th>Final Balance</th>
                         <th>Prev Adjust</th>
                         <th>Total Balance</th>
@@ -609,6 +618,7 @@ foreach ($earnings as $row) {
                                 <td data-order="<?= (float) $row['total_payout']; ?>"><?= num_display($row['total_payout']); ?></td>
                                 <td data-order="<?= (float) $row['balance']; ?>"><?= num_display($row['balance']); ?></td>
                                 <td data-order="<?= (float) $row['tax']; ?>"><?= num_display($row['tax']); ?></td>
+                                <td data-order="<?= (float) ($row['others'] ?? 0); ?>"><?= num_display($row['others'] ?? 0); ?></td>
                                 <td data-order="<?= $weekBal; ?>"><?= num_display($weekBal); ?></td>
                                 <td data-order="<?= $prevCarry; ?>"><?= num_display($prevCarry); ?></td>
                                 <td data-order="<?= $totalBal; ?>">
@@ -660,6 +670,7 @@ foreach ($earnings as $row) {
                         <th><?= num_display($totals['total_payout']); ?></th>
                         <th><?= num_display($totals['balance']); ?></th>
                         <th><?= num_display($totals['tax']); ?></th>
+                        <th><?= num_display($totals['others']); ?></th>
                         <th><?= num_display($totals['week_balance']); ?></th>
                         <th><?= num_display($totals['prev_carry']); ?></th>
                         <th><?= num_display($totals['total_balance']); ?></th>
@@ -733,7 +744,7 @@ foreach ($earnings as $row) {
                 ],
                 order: [[3, 'desc'], [4, 'desc']],
                 columnDefs: [
-                    { orderable: false, targets: [0, 20] }
+                    { orderable: false, targets: [0, 21] }
                 ]
             });
 
