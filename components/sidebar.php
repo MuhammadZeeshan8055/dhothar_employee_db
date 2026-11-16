@@ -1,6 +1,6 @@
 <?php
 $current_page = basename($_SERVER['SCRIPT_NAME'], '.php');
-$employee_pages = ['add_employee', 'manage_employee', 'employee_edit', 'delivery_settings', 'delivery_earnings', 'ride_sharing_settings', 'ride_sharing_earnings'];
+$employee_pages = ['add_employee', 'manage_employee', 'employee_edit', 'delivery_settings', 'delivery_earnings', 'ride_sharing_settings', 'ride_sharing_earnings', 'attendance_shifts', 'attendance_holidays', 'attendance_mark', 'attendance_report'];
 $is_employee_section = in_array($current_page, $employee_pages, true);
 $is_dashboard = ($current_page === 'index');
 $is_rate_manager = isRateManager();
@@ -75,6 +75,30 @@ $is_rate_manager = isRateManager();
                 <li class="<?= $current_page === 'ride_sharing_earnings' ? 'active' : '' ?>">
                     <a href="ride_sharing_earnings">
                         <span class="title">Ride Sharing Earnings</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'attendance_shifts' ? 'active' : '' ?>">
+                    <a href="attendance_shifts">
+                        <span class="title">Attendance Shifts</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'attendance_holidays' ? 'active' : '' ?>">
+                    <a href="attendance_holidays">
+                        <span class="title">Attendance Holidays</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'attendance_mark' ? 'active' : '' ?>">
+                    <a href="attendance_mark">
+                        <span class="title">Mark Attendance</span>
+                    </a>
+                </li>
+
+                <li class="<?= $current_page === 'attendance_report' ? 'active' : '' ?>">
+                    <a href="attendance_report">
+                        <span class="title">Attendance Report</span>
                     </a>
                 </li>
             </ul>
