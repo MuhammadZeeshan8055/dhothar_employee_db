@@ -3,17 +3,42 @@
  * Attendance helpers — simple functions only.
  *
  * Status values: present | absent | leave | holiday
- * Sundays are always holidays (no DB row needed).
+ * Saturday + Sunday are always holidays (no DB row needed).
  */
 
 /**
- * Check if a date is Sunday.
+ * Check if a date is Saturday or Sunday.
  * $date format: Y-m-d
+ */
+function attendance_is_weekend($date)
+{
+    // N = 1 (Mon) ... 6 (Sat), 7 (Sun)
+    $day = (int) date('N', strtotime($date));
+    return ($day === 6 || $day === 7);
+}
+
+/**
+ * Old name kept so older code still works.
+ * Same as attendance_is_weekend().
  */
 function attendance_is_sunday($date)
 {
-    // N = 1 (Mon) ... 7 (Sun)
-    return (int) date('N', strtotime($date)) === 7;
+    return attendance_is_weekend($date);
+}
+
+/**
+ * Label for weekend day: Saturday / Sunday
+ */
+function attendance_weekend_label($date)
+{
+    $day = (int) date('N', strtotime($date));
+    if ($day === 6) {
+        return 'Saturday';
+    }
+    if ($day === 7) {
+        return 'Sunday';
+    }
+    return 'Weekend';
 }
 
 /**
@@ -76,15 +101,15 @@ function attendance_get_holidays($db, $from_date, $to_date)
  * Decide what a day should show before staff marks it.
  * Returns: array with keys status, label, locked
  *
- * locked = true means staff cannot change it (Sunday / holiday).
+ * locked = true means staff cannot change it (weekend / holiday).
  */
 function attendance_resolve_day($date, $holiday_map)
 {
-    // 1) Sunday
-    if (attendance_is_sunday($date)) {
+    // 1) Saturday or Sunday
+    if (attendance_is_weekend($date)) {
         return array(
             'status' => 'holiday',
-            'label' => 'Sunday',
+            'label' => attendance_weekend_label($date),
             'locked' => true,
         );
     }

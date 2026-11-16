@@ -25,7 +25,7 @@ if ($employee_id <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $att_date)) {
     exit;
 }
 
-// Holiday / Sunday cannot be marked
+// Holiday / weekend (Sat–Sun) cannot be marked
 $holidays = attendance_get_holidays($obj, $att_date, $att_date);
 $info = attendance_resolve_day($att_date, $holidays);
 if ($info['locked']) {

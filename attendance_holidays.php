@@ -1,7 +1,7 @@
 <?php
 /**
  * Attendance Holidays — Add / Edit / Delete
- * Sundays are always holidays in code (no need to add them here).
+ * Saturday + Sunday are always holidays in code (no need to add them here).
  */
 
 include('session.php');
@@ -26,9 +26,9 @@ if (isset($_POST['save_holiday'])) {
         attendance_holidays_toast('error', 'Please fill date and title.');
     }
 
-    // Block Sundays — they are automatic holidays
-    if (attendance_is_sunday($holiday_date)) {
-        attendance_holidays_toast('error', 'Sundays are already holidays. No need to add them.');
+    // Block Sat/Sun — they are automatic holidays
+    if (attendance_is_weekend($holiday_date)) {
+        attendance_holidays_toast('error', 'Saturday and Sunday are already holidays. No need to add them.');
     }
 
     $safe_date = $obj->escape($holiday_date);
@@ -177,7 +177,7 @@ $form_title = $edit_holiday ? $edit_holiday['title'] : '';
         </div>
 
         <div class="sunday-note">
-            <strong>Note:</strong> Sundays are always treated as holidays automatically.
+            <strong>Note:</strong> Saturday and Sunday are always treated as holidays automatically.
             You only need to add extra holidays here (e.g. national holidays).
         </div>
 

@@ -1,5 +1,5 @@
 -- Attendance tables (run once in phpMyAdmin / MySQL)
--- Sundays are holidays in PHP code (not stored as rows)
+-- Saturday + Sunday are holidays in PHP code (not stored as rows)
 
 CREATE TABLE IF NOT EXISTS `attendance_shifts` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
