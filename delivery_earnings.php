@@ -724,6 +724,9 @@ $form_range_label = week_range_label($current_start, $current_end);
     <script src="<?= $base_url ?>assets/js/jvectormap/jquery-jvectormap-europe-merc-en.js" id="script-resource-9"></script>
     <script src="<?= $base_url ?>assets/js/neon-chat.js" id="script-resource-16"></script>
     <script src="<?= $base_url ?>assets/js/neon-custom.js" id="script-resource-17"></script>
+    <script>
+        window.VEHICLE_COMPANY_LABELS = <?= json_encode(vehicle_companies_label_map($obj)) ?>;
+    </script>
     <script src="<?= $base_url ?>assets/js/delivery_earnings.js"></script>
 
     <script type="text/javascript">

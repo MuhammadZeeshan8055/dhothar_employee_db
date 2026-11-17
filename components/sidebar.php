@@ -1,10 +1,12 @@
 <?php
 $current_page = basename($_SERVER['SCRIPT_NAME'], '.php');
 $employee_pages = ['add_employee', 'manage_employee', 'employee_edit'];
+$companies_pages = ['manage_companies', 'manage_vehicle_companies'];
 $delivery_pages = ['delivery_settings', 'delivery_earnings'];
 $ridesharing_pages = ['ride_sharing_settings', 'ride_sharing_earnings'];
 $attendance_pages = ['attendance_shifts', 'attendance_holidays', 'attendance_mark', 'attendance_report'];
 $is_employee_section = in_array($current_page, $employee_pages, true);
+$is_companies_section = in_array($current_page, $companies_pages, true);
 $is_delivery_section = in_array($current_page, $delivery_pages, true);
 $is_ridesharing_section = in_array($current_page, $ridesharing_pages, true);
 $is_attendance_section = in_array($current_page, $attendance_pages, true);
@@ -57,6 +59,26 @@ $is_rate_manager = isRateManager();
                 <li class="<?= $current_page === 'manage_employee' || $current_page === 'employee_edit' ? 'active' : '' ?>">
                     <a href="manage_employee">
                         <span class="title">Manage Employee Details</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Companies -->
+        <li class="has-sub root-level<?= $is_companies_section ? ' opened active' : '' ?>">
+            <a href="#">
+                <i class="entypo-briefcase"></i>
+                <span class="title">Companies</span>
+            </a>
+            <ul<?= $is_companies_section ? ' class="visible"' : '' ?>>
+                <li class="<?= $current_page === 'manage_companies' ? 'active' : '' ?>">
+                    <a href="manage_companies">
+                        <span class="title">Employee Companies</span>
+                    </a>
+                </li>
+                <li class="<?= $current_page === 'manage_vehicle_companies' ? 'active' : '' ?>">
+                    <a href="manage_vehicle_companies">
+                        <span class="title">Vehicle Companies</span>
                     </a>
                 </li>
             </ul>

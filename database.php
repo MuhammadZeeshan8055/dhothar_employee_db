@@ -272,6 +272,15 @@ class Database
     }
   }
 
+  public function execute($sql)
+  {
+    if ($this->mysqli->query($sql)) {
+      return true;
+    }
+    array_push($this->result, $this->mysqli->error);
+    return false;
+  }
+
   // Private function to check if table exists for use with queries
   private function tableExists($table)
   {

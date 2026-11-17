@@ -76,13 +76,10 @@
     }
 
     function vehicleCompanyLabel(val) {
-        var map = {
-            uny_mobility: 'UNY MOBILITY',
-            uny_mobility_srl: 'UNY MOBILITY SRL',
-            kiris_rent_srl: 'KIRIS RENT SRL',
-            rbj_brothers_srl: 'RBJ BROTHERS SRL'
-        };
-        return map[val] || val || '';
+        if (window.VEHICLE_COMPANY_LABELS && window.VEHICLE_COMPANY_LABELS[val]) {
+            return window.VEHICLE_COMPANY_LABELS[val];
+        }
+        return val || '';
     }
 
     function fillVehicleInfo(data) {

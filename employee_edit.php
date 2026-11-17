@@ -2,6 +2,7 @@
 
 include('session.php');
 include('database.php');
+include('includes/companies_helper.php');
 
 $obj = new Database();
 
@@ -232,19 +233,7 @@ if (isset($_POST['update_employee'])) {
                                                 <label class="control-label">Company Name</label>
                                                 <select name="company_name" class="form-control" required>
                                                     <option value="">--Select Company--</option>
-                                                    <?php
-                                                    $companies = [
-                                                        "RENT WITH ME S.R.L",
-                                                        "DHOTHAR HR SERVICES S.R.L",
-                                                        "DHOTHAR INTERNATINOAL IMPEX S.R.L",
-                                                        "DIG LOGISTICS S.R.L",
-                                                        "PASIO",
-                                                    ];
-                                                    foreach ($companies as $c) {
-                                                        $selected = ($emp['company_name'] == $c) ? 'selected' : '';
-                                                        echo "<option value=\"" . htmlspecialchars($c) . "\" $selected>" . htmlspecialchars($c) . "</option>";
-                                                    }
-                                                    ?>
+                                                    <?= companies_options_html($obj, $emp['company_name'] ?? '') ?>
                                                 </select>
                                             </div>
                                             <div class="clear"></div><br>

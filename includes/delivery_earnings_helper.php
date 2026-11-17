@@ -12,6 +12,8 @@
  *                   clears when the previous week is marked paid/locked
  */
 
+require_once __DIR__ . '/vehicle_companies_helper.php';
+
 /** Format amount for DB insert/update (2 decimals). */
 function money_db($amount)
 {
@@ -342,20 +344,6 @@ function vehicle_type_label($value)
         'bicyle' => 'Bicycle',
         'sc' => 'Scooter',
         'car' => 'Car',
-        'on_car' => 'On Car',
-        'own_car' => 'Own Car',
-    ];
-
-    return $map[$value] ?? $value;
-}
-
-function vehicle_company_label($value)
-{
-    $map = [
-        'uny_mobility' => 'UNY MOBILITY',
-        'uny_mobility_srl' => 'UNY MOBILITY SRL',
-        'kiris_rent_srl' => 'KIRIS RENT SRL',
-        'rbj_brothers_srl' => 'RBJ BROTHERS SRL',
         'on_car' => 'On Car',
         'own_car' => 'Own Car',
     ];

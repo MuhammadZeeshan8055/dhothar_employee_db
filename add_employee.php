@@ -2,6 +2,7 @@
 
 include('session.php');
 include('database.php');
+include('includes/companies_helper.php');
 
 $obj = new Database();
 
@@ -221,11 +222,7 @@ if (isset($_POST['add_employee'])) {
                                                 <label class="control-label">Company name</label>
                                                 <select name="company_name" class="form-control" required>
                                                     <option value="">--Select Company--</option>
-                                                    <option value="RENT WITH ME S.R.L">RENT WITH ME S.R.L</option>
-                                                    <option value="DHOTHAR HR SERVICES S.R.L">DHOTHAR HR SERVICES S.R.L</option>
-                                                    <option value="DHOTHAR INTERNATINOAL IMPEX S.R.L">DHOTHAR INTERNATINOAL IMPEX S.R.L</option>
-                                                    <option value="DIG LOGISTICS S.R.L">DIG LOGISTICS S.R.L</option>
-                                                    <option value="PASIO">PASIO</option>
+                                                    <?= companies_options_html($obj) ?>
                                                 </select>
                                             </div>
 
