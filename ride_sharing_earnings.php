@@ -78,8 +78,9 @@ if (isset($_POST['save_ride_sharing_earning'])) {
     $existing = ride_find_week_earning($obj, $employee_id, $week_year, $week_number);
     $isUpdate = !empty($existing);
 
-    if ($isUpdate && (int) ($existing['status'] ?? 0) === 1 && !isSuperAdmin()) {
-        ride_earning_toast('error', 'This week is paid and locked. Cannot update.');
+    // If a later (or this) week is Paid → Admin cannot change this week
+    if (is_week_paid_locked($obj, 'ride_sharing_earnings', $employee_id, $week_year, $week_number)) {
+        ride_earning_toast('error', 'This week is locked because a later week is paid. Only Super Admin can change it.');
     }
 
     $data = [
@@ -184,6 +185,9 @@ $progress = ride_progress_for_week($obj, $progress_year, $progress_week);
 $missingEarnings = $progress['missing'];
 $totalRateSettings = $progress['total_with_rates'];
 $totalRemainingEarnings = $progress['total_missing'];
+
+// Latest paid week per employee → locks that week and all earlier weeks
+$latestPaidMap = build_latest_paid_map($obj, 'ride_sharing_earnings');
 
 $form_range_label = week_range_label($current_start, $current_end);
 
@@ -526,9 +530,11 @@ foreach ($earnings as $row) {
                 <button type="button" class="btn btn-success btn-sm" id="markPaidBtn" disabled>
                     Mark Selected as Paid
                 </button>
+                <?php if (isSuperAdmin()): ?>
                 <button type="button" class="btn btn-warning btn-sm" id="markUnpaidBtn" disabled>
                     Mark Selected as Unpaid
                 </button>
+                <?php endif; ?>
                 <span id="selectedCount">0 selected</span>
             </div>
 
@@ -571,9 +577,17 @@ foreach ($earnings as $row) {
                             $prevCarry = (float) ($row['prev_carry'] ?? 0);
                             $totalBal = (float) ($row['total_balance'] ?? 0);
                             $isPaid = (int) ($row['status'] ?? 0) === 1;
-                            $rowLocked = $isPaid && !isSuperAdmin();
+                            // Locked if this week OR a later week is paid (Super Admin not locked)
+                            $rowLocked = is_week_paid_locked(
+                                $obj,
+                                'ride_sharing_earnings',
+                                (int) ($row['employee_id'] ?? 0),
+                                (int) ($row['week_year'] ?? 0),
+                                (int) ($row['week_number'] ?? 0),
+                                $latestPaidMap
+                            );
                             ?>
-                            <tr class="<?= $isPaid ? 'earning-row-paid' : '' ?>">
+                            <tr class="<?= ($isPaid || $rowLocked) ? 'earning-row-paid' : '' ?>">
                                 <td>
                                     <input type="checkbox" class="earning-checkbox" value="<?= (int) $row['id']; ?>"
                                         <?= $rowLocked ? 'disabled' : '' ?>>
@@ -610,7 +624,7 @@ foreach ($earnings as $row) {
                                 <td>
                                     <?php if ($rowLocked): ?>
                                         <span class="label label-success earning-locked-label">
-                                            <i class="entypo-lock"></i> Locked
+                                            <i class="entypo-lock"></i> Locked<?= $isPaid ? '' : ' (later week paid)' ?>
                                         </span>
                                     <?php else: ?>
                                         <div style="display:flex; gap:6px; flex-wrap:wrap;">

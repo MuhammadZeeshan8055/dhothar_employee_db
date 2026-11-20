@@ -202,6 +202,12 @@ function ride_cascade_following_weeks($obj, $employee_id, $week_year, $week_numb
     $updated = 0;
     foreach ($rows as $row) {
         $id = (int) $row['id'];
+
+        // Never rewrite a paid/locked week
+        if ((int) ($row['status'] ?? 0) === 1) {
+            continue;
+        }
+
         $week_balance = round((float) ($row['week_balance'] ?? 0), 2);
         $carry = ride_get_prev_carry($obj, $employee_id, (int) $row['week_year'], (int) $row['week_number']);
         $prev_carry = (float) $carry['prev_carry'];
@@ -295,6 +301,7 @@ function ride_settings_toast($type, $message)
 
 require_once __DIR__ . '/vehicle_companies_helper.php';
 require_once __DIR__ . '/employee_status_helper.php';
+require_once __DIR__ . '/paid_lock_helper.php';
 
 /**
  * Remaining earnings for a week (same idea as Delivery).

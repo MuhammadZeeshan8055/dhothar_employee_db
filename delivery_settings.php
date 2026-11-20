@@ -30,6 +30,11 @@ if (isset($_POST['save_delivery_settings'])) {
         settings_toast('error', 'Please select a valid year and week.');
     }
 
+    // If this week (or a later week) is paid → Admin cannot change rates
+    if (is_week_paid_locked($obj, 'delivery_earnings', $employee_id, $week_year, $week_number)) {
+        settings_toast('error', 'Rate settings are locked because this week (or a later week) is paid. Only Super Admin can change them.');
+    }
+
     list($week_start, $week_end) = iso_week_range($week_year, $week_number);
 
     $data = [

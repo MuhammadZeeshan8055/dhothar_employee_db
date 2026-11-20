@@ -27,7 +27,14 @@ if (empty($row) || empty($row[0]['id'])) {
     exit;
 }
 
-if ((int) ($row[0]['status'] ?? 0) === 1 && !isSuperAdmin()) {
+// Locked if this week or any later week is paid (Super Admin can still delete)
+if (is_week_paid_locked(
+    $obj,
+    'ride_sharing_earnings',
+    (int) $row[0]['employee_id'],
+    (int) $row[0]['week_year'],
+    (int) $row[0]['week_number']
+)) {
     echo 'locked';
     exit;
 }

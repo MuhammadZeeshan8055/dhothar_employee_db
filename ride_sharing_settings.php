@@ -25,6 +25,11 @@ if (isset($_POST['save_ride_sharing_settings'])) {
         ride_settings_toast('error', 'Please select a valid year and week.');
     }
 
+    // If this week (or a later week) is paid → Admin cannot change rates
+    if (is_week_paid_locked($obj, 'ride_sharing_earnings', $employee_id, $week_year, $week_number)) {
+        ride_settings_toast('error', 'Rate settings are locked because this week (or a later week) is paid. Only Super Admin can change them.');
+    }
+
     list($week_start, $week_end) = iso_week_range($week_year, $week_number);
 
     $data = [
