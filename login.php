@@ -26,77 +26,66 @@ if (isset($_POST['login'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Dhothar International" />
-    <meta name="author" content="Laborator.co" />
     <link rel="icon" href="<?= $base_url ?>assets/images/favicon.ico">
     <title>Dhothar International | Login</title>
-
-    <link rel="stylesheet" href="<?= $base_url ?>assets/js/jquery-ui/css/no-theme/jquery-ui-1.10.3.custom.min.css">
-    <link rel="stylesheet" href="<?= $base_url ?>assets/css/font-icons/entypo/css/entypo.css">
-    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic">
-    <link rel="stylesheet" href="<?= $base_url ?>assets/css/bootstrap.css">
-    <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css">
-    <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-theme.css">
-    <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-forms.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/custom.css">
+    <?php include('components/theme_head.php'); ?>
+    <script src="<?= $base_url ?>assets/js/dhothar-theme.js"></script>
 </head>
-
-<body class="page-body login-page">
-
-    <div class="login-container">
-
-        <div class="login-header login-caret">
-            <div class="login-content">
-                <a href="#" class="logo">
-                    <img src="<?= $base_url ?>dhothar_logo.png" width="100%" alt="Dhothar International" />
-                </a>
-            </div>
+<body class="login-page">
+    <div class="dh-login">
+        <div class="dh-login-bg" aria-hidden="true">
+            <span class="dh-login-orb dh-login-orb-a"></span>
+            <span class="dh-login-orb dh-login-orb-b"></span>
+            <span class="dh-login-orb dh-login-orb-c"></span>
+            <span class="dh-login-grid"></span>
         </div>
 
-        <div class="login-form">
-            <div class="login-content">
+        <button type="button" id="dh-theme-toggle" class="dh-theme-toggle dh-login-theme" title="Toggle light / dark" aria-label="Toggle theme">
+            <svg class="dh-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+            </svg>
+            <svg class="dh-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 15.1A8.7 8.7 0 0 1 8.9 3.8 9 9 0 1 0 20.2 15.1Z"></path>
+            </svg>
+        </button>
+
+        <div class="dh-login-shell">
+            <aside class="dh-login-hero">
+                <div class="dh-login-hero-inner">
+                    <img src="<?= $base_url ?>dhothar_logo.png" alt="Dhothar International" class="dh-login-logo">
+                    <p class="dh-login-copy">Sign in to manage employees, attendance, and daily operations.</p>
+                </div>
+            </aside>
+
+            <section class="dh-login-sheet">
+                <h2 class="dh-login-sheet-title">Welcome back</h2>
+                <p class="dh-login-sheet-sub">Enter your details to continue</p>
 
                 <?php if ($error !== ''): ?>
-                    <div class="form-login-error" style="display:block; margin-bottom:15px;">
-                        <h3>Invalid login</h3>
-                        <p><?= htmlspecialchars($error) ?></p>
-                    </div>
+                    <div class="dh-login-error"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
-                <form method="post" role="form" autocomplete="off">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <div class="input-group-addon"><i class="entypo-user"></i></div>
-                            <input type="text" class="form-control" name="email" id="username"
-                                placeholder="email" autocomplete="off" required
-                                value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" />
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="input-group">
-                            <div class="input-group-addon"><i class="entypo-key"></i></div>
-                            <input type="password" class="form-control" name="password" id="password"
-                                placeholder="Password" autocomplete="off" required />
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" name="login" class="btn btn-primary btn-block btn-login">
-                            <i class="entypo-login"></i>
-                            Log In
-                        </button>
-                    </div>
+                <form method="post" class="dh-login-form" autocomplete="off">
+                    <label class="dh-login-label" for="username">Email</label>
+                    <input type="text" class="dh-login-input" name="email" id="username"
+                        placeholder="name@example.com" required
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+
+                    <label class="dh-login-label" for="password">Password</label>
+                    <input type="password" class="dh-login-input" name="password" id="password"
+                        placeholder="Your password" required>
+
+                    <button type="submit" name="login" class="dh-login-btn">Log In</button>
                 </form>
-
-            </div>
+            </section>
         </div>
-
     </div>
-
 </body>
-
 </html>

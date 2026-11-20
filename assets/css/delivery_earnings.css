@@ -1,3 +1,43 @@
+/* ---------- Earning entry show / hide toggle (Neon panel title left + arrow right) ---------- */
+.earning-entry-panel > .panel-heading.earning-entry-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+.earning-entry-panel > .panel-heading > .panel-title {
+    float: left;
+}
+
+.earning-entry-panel > .panel-heading > .panel-options {
+    float: right;
+}
+
+.earning-entry-panel > .panel-heading > .panel-options > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 6px;
+    border: 1px solid var(--dh-border, #cfd8e3);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--dh-text, #2c3e50) !important;
+    text-decoration: none !important;
+}
+
+.earning-entry-panel > .panel-heading > .panel-options > a i {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.earning-entry-hint {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.75;
+}
+
 /* Delivery earnings form */
 #earningForm .control-label {
     display: block;
@@ -26,24 +66,32 @@
     padding: 8px 20px;
 }
 
-.calc-readonly {
-    background: #f7f7f7;
+/* Auto / read-only fields — grey so they look disabled */
+.form-control.calc-readonly,
+input.calc-readonly[readonly] {
+    background: #eef1f4 !important;
+    border-color: #d0d7de !important;
     font-weight: 600;
-    color: #444;
+    color: #445566 !important;
+    cursor: not-allowed;
 }
 
-.total-highlight {
-    background: #f0faf2 !important;
-    border-color: #cfe8d4;
+/* Important totals — soft green */
+.form-control.calc-readonly.total-highlight,
+input.calc-readonly.total-highlight[readonly] {
+    background: #eef8f0 !important;
+    border-color: #c5e0cb !important;
     font-weight: 700;
-    color: #2e7d32;
+    color: #2e7d32 !important;
 }
 
-.total-negative {
+/* Negative totals — soft red */
+.form-control.calc-readonly.total-negative,
+input.calc-readonly.total-negative[readonly] {
     background: #fff5f5 !important;
-    border-color: #f5c2c2;
+    border-color: #f5c2c2 !important;
     font-weight: 700;
-    color: #c62828;
+    color: #c62828 !important;
 }
 
 .carry-alert {

@@ -130,6 +130,7 @@ $form_active = $edit_shift ? (int) $edit_shift['is_active'] : 1;
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/bootstrap.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css">
+    <?php include('components/head_theme.php'); ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
@@ -149,7 +150,7 @@ $form_active = $edit_shift ? (int) $edit_shift['is_active'] : 1;
     </style>
 </head>
 
-<body class="">
+<body class="page-body">
 <div class="page-container">
     <div class="sidebar-menu">
         <?php include('components/sidebar.php'); ?>

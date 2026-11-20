@@ -29,6 +29,7 @@ $employees = $obj->getResult();
         id="style-resource-3">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/bootstrap.css" id="style-resource-4">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css" id="style-resource-5">
+    <?php include('components/head_theme.php'); ?>
 
     <script src="<?= $base_url ?>assets/js/jquery-1.11.3.min.js"></script>
 
@@ -78,7 +79,7 @@ $employees = $obj->getResult();
 
 </head>
 
-<body class="">
+<body class="page-body">
     <div class="page-container">
         <div class="sidebar-menu">
 

@@ -1,9 +1,108 @@
 /**
- *
- * Apply Here your Custom CSS
- *
-*/
+ * Custom CSS for Employee DB
+ * Step 1: load the Dhothar theme
+ * Step 2: small easy fixes for this project
+ */
+@import url("dhothar-theme.css");
 
-body {
-	
+/* ---------- 1) Submenu text = white ---------- */
+#main-menu li ul li a,
+#main-menu li ul li a .title {
+  color: #ffffff !important;
+}
+
+#main-menu li ul li a:hover,
+#main-menu li ul li a:hover .title,
+#main-menu li ul li.active > a,
+#main-menu li ul li.active > a .title {
+  color: #ffffff !important;
+}
+
+/* ---------- 2) Show / hide submenus ---------- */
+/* Closed menu: hide the list */
+#main-menu li.has-sub:not(.opened) > ul {
+  display: none !important;
+}
+
+/* Open menu, or Neon .visible while measuring height: show the list */
+#main-menu li.has-sub.opened > ul,
+#main-menu li.has-sub > ul.visible {
+  display: block !important;
+}
+
+/* ---------- 3) Main page text color ---------- */
+.main-content,
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.main-content h4,
+.main-content p,
+.main-content label,
+.main-content td,
+.main-content th {
+  color: var(--dh-text);
+}
+
+.main-content .text-muted {
+  color: var(--dh-text-muted) !important;
+}
+
+.table > thead > tr > th,
+.table > tbody > tr > td {
+  color: var(--dh-text);
+}
+
+.dh-app-header .dh-theme-toggle {
+  vertical-align: middle;
+}
+
+/* ---------- 4) Disabled / auto fields (grey + green totals) ---------- */
+/*
+ * Theme CSS sets ALL .form-control to white with !important.
+ * These rules are stronger so auto fields look disabled again.
+ */
+body:not(.login-page) .form-control.calc-readonly,
+body:not(.login-page) input.calc-readonly[readonly] {
+  background: #eef1f4 !important;
+  border-color: #d0d7de !important;
+  color: #445566 !important;
+  font-weight: 600;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+/* Totals (Total Earning / Total Balance) = soft green */
+body:not(.login-page) .form-control.calc-readonly.total-highlight {
+  background: #eef8f0 !important;
+  border-color: #c5e0cb !important;
+  color: #2e7d32 !important;
+  font-weight: 700;
+}
+
+/* Negative total = soft red */
+body:not(.login-page) .form-control.calc-readonly.total-negative {
+  background: #fff5f5 !important;
+  border-color: #f5c2c2 !important;
+  color: #c62828 !important;
+  font-weight: 700;
+}
+
+/* Dark theme versions */
+[data-theme="dark"] body:not(.login-page) .form-control.calc-readonly,
+[data-theme="dark"] body:not(.login-page) input.calc-readonly[readonly] {
+  background: #1a2838 !important;
+  border-color: rgba(86, 201, 246, 0.2) !important;
+  color: #b6c7d6 !important;
+}
+
+[data-theme="dark"] body:not(.login-page) .form-control.calc-readonly.total-highlight {
+  background: #163028 !important;
+  border-color: rgba(47, 158, 107, 0.45) !important;
+  color: #7dcea0 !important;
+}
+
+[data-theme="dark"] body:not(.login-page) .form-control.calc-readonly.total-negative {
+  background: #2a1a1a !important;
+  border-color: rgba(232, 93, 93, 0.45) !important;
+  color: #f5a5a5 !important;
 }

@@ -245,6 +245,7 @@ $form_range_label = week_range_label($current_start, $current_end);
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/bootstrap.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/neon-core.css">
+    <?php include('components/head_theme.php'); ?>
     <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/js/select2/select2-bootstrap.css">
     <link rel="stylesheet" href="<?= $base_url ?>assets/css/delivery_earnings.css">
@@ -319,7 +320,7 @@ $form_range_label = week_range_label($current_start, $current_end);
     </style>
 </head>
 
-<body>
+<body class="page-body">
     <div class="page-container">
         <div class="sidebar-menu">
             <?php include('components/sidebar.php'); ?>
@@ -329,14 +330,26 @@ $form_range_label = week_range_label($current_start, $current_end);
             <?php include('components/header.php'); ?>
             <hr />
 
-            <!-- ENTRY FORM -->
+            <?php
+            // Open the form automatically when coming from "Add Earnings" / edit link
+            $open_earning_form = ($form_employee_id > 0);
+            ?>
+            <!-- ENTRY FORM (hidden by default — click title to open) -->
             <div class="row">
                 <div class="col-md-12">
-                    <div class="panel panel-primary" data-collapsed="0">
-                        <div class="panel-heading">
-                            <div class="panel-title">Delivery Earning Entry</div>
+                    <div class="panel panel-primary earning-entry-panel" id="earningEntryPanel" data-collapsed="<?= $open_earning_form ? '0' : '1' ?>">
+                        <div class="panel-heading earning-entry-toggle" id="earningEntryToggle" role="button" tabindex="0" aria-expanded="<?= $open_earning_form ? 'true' : 'false' ?>">
+                            <div class="panel-title">
+                                Delivery Earning Entry
+                                <small class="earning-entry-hint"><?= $open_earning_form ? 'Click to hide' : 'Click to open form' ?></small>
+                            </div>
+                            <div class="panel-options">
+                                <a href="#" data-rel="collapse" rel="collapse" title="Open / close form">
+                                    <i class="entypo-down-open"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="panel-body">
+                        <div class="panel-body earning-entry-body" id="earningEntryBody"<?= $open_earning_form ? '' : ' style="display:none;"' ?>>
                             <form action="delivery_earnings" method="post" id="earningForm">
                                 <div class="row">
                                     <div class="col-md-1"></div>

@@ -266,8 +266,61 @@
             });
     }
 
+    // Is the earning entry form currently open?
+    function isEarningFormOpen() {
+        var $panel = $('#earningEntryPanel');
+        if ($panel.attr('data-collapsed') === '1') {
+            return false;
+        }
+        if ($panel.hasClass('panel-collapse')) {
+            return false;
+        }
+        return $('#earningEntryBody').is(':visible');
+    }
+
+    // Update the small hint text next to the title
+    function updateEarningFormHint() {
+        var isOpen = isEarningFormOpen();
+        $('#earningEntryPanel').find('.earning-entry-hint').text(isOpen ? 'Click to hide' : 'Click to open form');
+        $('#earningEntryToggle').attr('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    // Open the form (used by Edit / Add Earnings)
+    function openEarningForm() {
+        var $panel = $('#earningEntryPanel');
+        var $body = $('#earningEntryBody');
+
+        if (isEarningFormOpen()) {
+            updateEarningFormHint();
+            return;
+        }
+
+        $panel.attr('data-collapsed', '0');
+        $panel.removeClass('panel-collapse');
+        $body.stop(true, true).slideDown('normal');
+        updateEarningFormHint();
+    }
+
     $(function () {
         var $employee = $('#employee_id');
+
+        // Click anywhere on the heading bar to toggle (arrow uses Neon collapse)
+        $('#earningEntryToggle').on('click', function (e) {
+            // If the arrow link was clicked, Neon already handles it
+            if ($(e.target).closest('a[data-rel="collapse"]').length) {
+                setTimeout(updateEarningFormHint, 350);
+                return;
+            }
+
+            e.preventDefault();
+            $(this).find('a[data-rel="collapse"]').trigger('click');
+            setTimeout(updateEarningFormHint, 350);
+        }).on('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+            }
+        });
 
         if ($.fn.select2) {
             if ($employee.data('select2')) {
@@ -328,8 +381,10 @@
 
             loadRates(employeeId);
 
+            // Open the form first, then scroll to it
+            openEarningForm();
             $('html, body').animate({
-                scrollTop: $('#earningForm').offset().top - 20
+                scrollTop: $('#earningEntryPanel').offset().top - 20
             }, 300);
         });
 

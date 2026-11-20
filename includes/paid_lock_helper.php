@@ -2,7 +2,7 @@
 /**
  * Paid lock helper (Delivery + Ridesharing)
  *
- * Simple rule:
+ * Simple rule for beginners:
  *   If week 46 is Paid for an employee,
  *   then week 46 and ALL earlier weeks (45, 44, 43, ...) are locked.
  *
@@ -15,7 +15,7 @@
 
 /**
  * Is week A before or the same as week B?
- * Example: (2026, 45) before or same as (2026, 46) → true
+ * Example: week 45 / 2026 before or same as week 46 / 2026 → yes
  */
 function week_is_before_or_same($year_a, $week_a, $year_b, $week_b)
 {
@@ -33,48 +33,81 @@ function week_is_before_or_same($year_a, $week_a, $year_b, $week_b)
     }
 
     // Same year → compare week numbers
-    return $week_a <= $week_b;
+    if ($week_a <= $week_b) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Only allow known earnings table names (keeps SQL safe and easy to read).
+ */
+function paid_lock_table_name($table)
+{
+    if ($table === 'delivery_earnings') {
+        return 'delivery_earnings';
+    }
+
+    if ($table === 'ride_sharing_earnings') {
+        return 'ride_sharing_earnings';
+    }
+
+    // Unknown table → empty (caller should not continue)
+    return '';
 }
 
 /**
  * Latest paid week for one employee.
- * Returns [week_year, week_number] or null if none paid.
- *
- * $table = 'delivery_earnings' or 'ride_sharing_earnings'
+ * Returns array with week_year + week_number, or null if none paid.
  */
 function find_latest_paid_week($obj, $table, $employee_id)
 {
+    $table = paid_lock_table_name($table);
     $employee_id = (int) $employee_id;
-    $table = preg_replace('/[^a-z_]/', '', (string) $table);
+
+    if ($table === '' || $employee_id <= 0) {
+        return null;
+    }
+
+    $where = "employee_id = " . $employee_id . " AND status = 1";
 
     $obj->select(
         $table,
         'week_year, week_number',
         null,
-        "employee_id = {$employee_id} AND status = 1",
+        $where,
         'week_year DESC, week_number DESC, id DESC',
         1
     );
     $rows = $obj->getResult();
 
-    if (!is_array($rows) || empty($rows[0]['week_year'])) {
+    if (!is_array($rows)) {
         return null;
     }
 
-    return [
+    if (empty($rows[0]['week_year'])) {
+        return null;
+    }
+
+    return array(
         'week_year' => (int) $rows[0]['week_year'],
         'week_number' => (int) $rows[0]['week_number'],
-    ];
+    );
 }
 
 /**
- * Map of employee_id => latest paid [week_year, week_number]
- * One query for the whole page (faster for tables).
+ * Build a map: employee_id => latest paid week
+ * Used on list pages so we do not query once per row.
  */
 function build_latest_paid_map($obj, $table)
 {
-    $table = preg_replace('/[^a-z_]/', '', (string) $table);
-    $map = [];
+    $table = paid_lock_table_name($table);
+    $map = array();
+
+    if ($table === '') {
+        return $map;
+    }
 
     $obj->select(
         $table,
@@ -94,16 +127,16 @@ function build_latest_paid_map($obj, $table)
             continue;
         }
 
-        $eid = (int) ($row['employee_id'] ?? 0);
-        if ($eid <= 0) {
+        $employee_id = (int) $row['employee_id'];
+        if ($employee_id <= 0) {
             continue;
         }
 
-        // Later rows overwrite earlier ones → ends as latest paid week
-        $map[$eid] = [
-            'week_year' => (int) ($row['week_year'] ?? 0),
-            'week_number' => (int) ($row['week_number'] ?? 0),
-        ];
+        // Later rows replace earlier ones → last value is the latest paid week
+        $map[$employee_id] = array(
+            'week_year' => (int) $row['week_year'],
+            'week_number' => (int) $row['week_number'],
+        );
     }
 
     return $map;
@@ -112,14 +145,11 @@ function build_latest_paid_map($obj, $table)
 /**
  * Is this week locked for a normal Admin?
  *
- * Locked when the employee has a paid week that is the same
- * or later than this week.
- *
- * Super Admin → always false (not locked for them).
+ * YES when the employee has a paid week that is the same or later.
+ * Super Admin is never locked by this rule.
  */
 function is_week_paid_locked($obj, $table, $employee_id, $week_year, $week_number, $latest_paid_map = null)
 {
-    // Super Admin can always change
     if (function_exists('isSuperAdmin') && isSuperAdmin()) {
         return false;
     }
@@ -132,22 +162,24 @@ function is_week_paid_locked($obj, $table, $employee_id, $week_year, $week_numbe
         return false;
     }
 
-    // Use map if given (table page), otherwise look up one employee
+    // Prefer the map (fast on tables). Otherwise look up one employee.
+    $latest_paid = null;
     if (is_array($latest_paid_map)) {
-        $latestPaid = $latest_paid_map[$employee_id] ?? null;
+        if (isset($latest_paid_map[$employee_id])) {
+            $latest_paid = $latest_paid_map[$employee_id];
+        }
     } else {
-        $latestPaid = find_latest_paid_week($obj, $table, $employee_id);
+        $latest_paid = find_latest_paid_week($obj, $table, $employee_id);
     }
 
-    if (!$latestPaid) {
-        return false; // nothing paid yet → not locked by this rule
+    if (!$latest_paid) {
+        return false;
     }
 
-    // If this week is on/before the latest paid week → locked
     return week_is_before_or_same(
         $week_year,
         $week_number,
-        $latestPaid['week_year'],
-        $latestPaid['week_number']
+        $latest_paid['week_year'],
+        $latest_paid['week_number']
     );
 }
