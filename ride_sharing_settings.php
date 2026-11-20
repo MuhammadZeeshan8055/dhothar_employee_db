@@ -74,7 +74,7 @@ $filter_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (i
 
 $obj->select(
     'ride_sharing_rate_settings',
-    'ride_sharing_rate_settings.*, add_employee_details.name, add_employee_details.company_name',
+    'ride_sharing_rate_settings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.status AS employee_status',
     'LEFT JOIN add_employee_details ON add_employee_details.id = ride_sharing_rate_settings.employee_id',
     "ride_sharing_rate_settings.week_year = {$filter_year} AND ride_sharing_rate_settings.week_number = {$filter_week}",
     'add_employee_details.name ASC, ride_sharing_rate_settings.id ASC'
@@ -194,7 +194,7 @@ $savedSettings = $obj->getResult() ?: [];
                                                     <option value=""></option>
                                                     <?php foreach ($employees as $emp): ?>
                                                         <option value="<?= (int) $emp['id']; ?>">
-                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '')); ?>
+                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '') . employee_status_option_suffix($emp['status'] ?? 1)); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
@@ -299,7 +299,10 @@ $savedSettings = $obj->getResult() ?: [];
                                         ?>
                                             <tr>
                                                 <td data-order="<?= $sno; ?>"><?= $sno++; ?></td>
-                                                <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
+                                                <td>
+                                                    <?= htmlspecialchars($row['name'] ?? ''); ?>
+                                                    <?= employee_status_badge_html($row['employee_status'] ?? 1); ?>
+                                                </td>
                                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= (int) ($row['week_year'] ?? 0); ?></td>
                                                 <td data-order="<?= (int) ($row['week_number'] ?? 0); ?>"><?= (int) ($row['week_number'] ?? 0); ?></td>
                                                 <td><?= htmlspecialchars(week_range_label($row['week_start'] ?? '', $row['week_end'] ?? '')); ?></td>

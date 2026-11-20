@@ -13,6 +13,7 @@
  */
 
 require_once __DIR__ . '/vehicle_companies_helper.php';
+require_once __DIR__ . '/employee_status_helper.php';
 
 /** Format amount for DB insert/update (2 decimals). */
 function money_db($amount)

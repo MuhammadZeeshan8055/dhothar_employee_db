@@ -87,7 +87,8 @@ if (isset($_POST['add_employee'])) {
         "bank_name" => $_POST['bank_name'],
 
         "status" => $_POST['status'],
-        "work_type" => (($_POST['status'] ?? '') == '2') ? '' : ($_POST['work_type'] ?? ''),
+        // Keep work_type even on Leave so Delivery / Ridesharing history stays linked
+        "work_type" => $_POST['work_type'] ?? '',
 
         "profile_pic" => $profile_pic
     );
@@ -476,14 +477,9 @@ if (isset($_POST['add_employee'])) {
         }
 
         (function ($) {
+            // Work type stays visible for Leave too (do not clear it)
             function toggleWorkType() {
-                var isLeave = $('#status').val() === '2';
-                if (isLeave) {
-                    $('#work_type_wrap').hide();
-                    $('#work_type').val('');
-                } else {
-                    $('#work_type_wrap').show();
-                }
+                $('#work_type_wrap').show();
             }
 
             function checkPassport() {

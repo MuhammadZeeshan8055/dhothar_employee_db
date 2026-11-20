@@ -152,7 +152,7 @@ $earningsWhere = $where ? implode(' AND ', $where) : null;
 
 $obj->select(
     'delivery_earnings',
-    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.type_of_contract',
+    'delivery_earnings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.type_of_contract, add_employee_details.status AS employee_status',
     'LEFT JOIN add_employee_details ON add_employee_details.id = delivery_earnings.employee_id',
     $earningsWhere,
     'delivery_earnings.week_year ASC, delivery_earnings.week_number ASC, delivery_earnings.id ASC'
@@ -176,6 +176,12 @@ $progress_week = $filter_week ?: $form_week;
 $weekRateSettings = [];
 foreach ($employees as $employee) {
     $employeeId = (int) ($employee['id'] ?? 0);
+
+    // Leave / Inactive people stay in the list, but do not count as "remaining earnings"
+    if (!employee_is_active($employee['status'] ?? 0)) {
+        continue;
+    }
+
     $rateResult = get_rate_settings_for_week($obj, $employeeId, $progress_year, $progress_week);
 
     if (!$rateResult) {
@@ -341,7 +347,7 @@ $form_range_label = week_range_label($current_start, $current_end);
                                                     <?php foreach ($employees as $emp): ?>
                                                         <option value="<?= (int) $emp['id']; ?>"
                                                             <?= (int) $emp['id'] === $form_employee_id ? 'selected' : ''; ?>>
-                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '')); ?>
+                                                            <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '') . employee_status_option_suffix($emp['status'] ?? 1)); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
@@ -638,7 +644,10 @@ $form_range_label = week_range_label($current_start, $current_end);
                                         <?= $rowLocked ? 'disabled' : '' ?>>
                                 </td>
                                 <td data-order="<?= $sno; ?>"><?= $sno++; ?></td>
-                                <td><?= htmlspecialchars($row['name'] ?? ''); ?></td>
+                                <td>
+                                    <?= htmlspecialchars($row['name'] ?? ''); ?>
+                                    <?= employee_status_badge_html($row['employee_status'] ?? 1); ?>
+                                </td>
                                 <td><?= htmlspecialchars($row['company_name'] ?? ''); ?></td>
                                 <td><?= htmlspecialchars($row['service_providers'] ?? ''); ?></td>
                                 <td data-order="<?= (int) ($row['week_year'] ?? 0); ?>"><?= htmlspecialchars($row['week_year'] ?? ''); ?></td>

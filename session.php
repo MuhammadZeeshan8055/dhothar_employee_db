@@ -3,7 +3,7 @@
 session_start();
 
 if ($_SERVER['HTTP_HOST'] == 'localhost') {
-    $base_url = "http://localhost/dhothar_employee_db/";
+    $base_url = "http://localhost/dh_employee_db/dhothar_employee_db/";
 } else {
     $base_url = "https://dhotharinternational.com/dhothar_employee_db/";
 }

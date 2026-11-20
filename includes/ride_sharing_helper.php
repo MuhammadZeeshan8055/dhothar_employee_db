@@ -294,6 +294,7 @@ function ride_settings_toast($type, $message)
 }
 
 require_once __DIR__ . '/vehicle_companies_helper.php';
+require_once __DIR__ . '/employee_status_helper.php';
 
 /** Attach vehicle company from week rate settings onto earning rows. */
 function ride_enrich_earnings_with_company($obj, array $earnings)
