@@ -141,14 +141,19 @@ if (isset($_POST['save_ride_sharing_earning'])) {
 // ---------------------------------------------------------------------------
 // PAGE DATA
 // ---------------------------------------------------------------------------
+// Dropdown: ridesharing work type, or anyone who already has rate settings
+// (covers Leave cases where work_type was cleared before the Leave fix)
 $obj->select(
     'add_employee_details',
     'add_employee_details.*',
     null,
-    "add_employee_details.work_type = 'ridesharing' AND add_employee_details.id IN (SELECT DISTINCT employee_id FROM ride_sharing_rate_settings)",
+    "(add_employee_details.work_type = 'ridesharing' OR add_employee_details.id IN (SELECT DISTINCT employee_id FROM ride_sharing_rate_settings))",
     'add_employee_details.name ASC'
 );
 $employees = $obj->getResult();
+if (!is_array($employees)) {
+    $employees = [];
+}
 
 $filter_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : null;
 $filter_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : null;
@@ -171,52 +176,14 @@ $obj->select(
 );
 $earnings = ride_enrich_earnings_with_company($obj, $obj->getResult() ?: []);
 
+// Use table filter week when set; otherwise the form week (same as Delivery)
 $progress_year = $filter_year ?: $form_year;
 $progress_week = $filter_week ?: $form_week;
 
-$weekRateSettings = [];
-foreach ($employees as $employee) {
-    $employeeId = (int) ($employee['id'] ?? 0);
-
-    // Leave / Inactive people stay in the list, but do not count as "remaining earnings"
-    if (!employee_is_active($employee['status'] ?? 0)) {
-        continue;
-    }
-
-    $rateResult = ride_get_rate_settings_for_week($obj, $employeeId, $progress_year, $progress_week);
-    if (!$rateResult) {
-        continue;
-    }
-    $settingRow = $rateResult['data'];
-    $settingRow['employee_id'] = $employeeId;
-    $settingRow['name'] = $employee['name'] ?? '';
-    $settingRow['company_name'] = $employee['company_name'] ?? '';
-    $weekRateSettings[] = $settingRow;
-}
-
-$obj->select(
-    'ride_sharing_earnings',
-    'employee_id',
-    null,
-    "week_year = {$progress_year} AND week_number = {$progress_week}"
-);
-$weekEarningRows = $obj->getResult() ?: [];
-
-$weekEarningEmployeeIds = [];
-foreach ($weekEarningRows as $earningRow) {
-    $weekEarningEmployeeIds[(int) ($earningRow['employee_id'] ?? 0)] = true;
-}
-
-$missingEarnings = [];
-foreach ($weekRateSettings as $settingRow) {
-    $employeeId = (int) ($settingRow['employee_id'] ?? 0);
-    if ($employeeId > 0 && empty($weekEarningEmployeeIds[$employeeId])) {
-        $missingEarnings[] = $settingRow;
-    }
-}
-
-$totalRateSettings = count($weekRateSettings);
-$totalRemainingEarnings = count($missingEarnings);
+$progress = ride_progress_for_week($obj, $progress_year, $progress_week);
+$missingEarnings = $progress['missing'];
+$totalRateSettings = $progress['total_with_rates'];
+$totalRemainingEarnings = $progress['total_missing'];
 
 $form_range_label = week_range_label($current_start, $current_end);
 
@@ -477,7 +444,8 @@ foreach ($earnings as $row) {
                         <div class="col-md-4 col-sm-6">
                             <div class="tile-stats tile-green">
                                 <div class="icon"><i class="entypo-chart-bar"></i></div>
-                                <div class="num"><?= $totalRateSettings; ?></div>
+                                <div class="num" data-start="0" data-end="<?= (int) $totalRateSettings; ?>" data-postfix=""
+                                    data-duration="1500" data-delay="600"><?= (int) $totalRateSettings; ?></div>
                                 <h3>Employees With Rate Settings — Week <?= (int) $progress_week; ?> / <?= (int) $progress_year; ?></h3>
                             </div>
                         </div>
@@ -485,7 +453,8 @@ foreach ($earnings as $row) {
                             <a href="#missingEarningsModal" data-toggle="modal" style="display:block;color:inherit;">
                                 <div class="tile-stats tile-red" style="cursor:pointer;">
                                     <div class="icon"><i class="entypo-users"></i></div>
-                                    <div class="num"><?= $totalRemainingEarnings; ?></div>
+                                    <div class="num" data-start="0" data-end="<?= (int) $totalRemainingEarnings; ?>" data-postfix=""
+                                        data-duration="1500" data-delay="0"><?= (int) $totalRemainingEarnings; ?></div>
                                     <h3>Remaining Earnings — Week <?= (int) $progress_week; ?> / <?= (int) $progress_year; ?></h3>
                                     <p style="margin:8px 0 0;color:#fff;">Click to view employees</p>
                                 </div>

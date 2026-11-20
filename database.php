@@ -173,9 +173,13 @@ class Database
         $sql .= " ORDER BY $order";
       }
       if ($limit != null) {
-        $page = isset($_GET['page']) ? $_GET['page'] : 1;
-        $start = ($page - 1) * $limit;
-        $sql .= " LIMIT $start, $limit";
+        // Simple number (e.g. 1) = "get N rows" — do not use URL ?page=
+        // "10,20" style string can still be passed for offset,count
+        if (is_numeric($limit)) {
+          $sql .= " LIMIT " . (int) $limit;
+        } else {
+          $sql .= " LIMIT $limit";
+        }
       }
 
       // **Print query only if debug is enabled**

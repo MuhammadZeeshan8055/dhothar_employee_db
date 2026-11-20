@@ -296,6 +296,102 @@ function ride_settings_toast($type, $message)
 require_once __DIR__ . '/vehicle_companies_helper.php';
 require_once __DIR__ . '/employee_status_helper.php';
 
+/**
+ * Remaining earnings for a week (same idea as Delivery).
+ *
+ * - with_rates = active employees who have rate settings for this week
+ *   (exact week OR carried from an earlier week)
+ * - missing    = those with_rates who do NOT have an earnings row yet
+ *
+ * Uses people linked by rate settings (not only work_type), so Leave
+ * employees who still have rates can appear after work_type is restored.
+ */
+function ride_progress_for_week($obj, $week_year, $week_number)
+{
+    $week_year = (int) $week_year;
+    $week_number = (int) $week_number;
+
+    $obj->select(
+        'add_employee_details',
+        'add_employee_details.*',
+        null,
+        "add_employee_details.id IN (SELECT DISTINCT employee_id FROM ride_sharing_rate_settings)",
+        'add_employee_details.name ASC'
+    );
+    $employees = $obj->getResult();
+    if (!is_array($employees)) {
+        $employees = [];
+    }
+
+    $obj->select(
+        'ride_sharing_earnings',
+        'employee_id',
+        null,
+        "week_year = {$week_year} AND week_number = {$week_number}"
+    );
+    $earnRows = $obj->getResult();
+    if (!is_array($earnRows)) {
+        $earnRows = [];
+    }
+
+    $hasEarning = [];
+    foreach ($earnRows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $eid = (int) ($row['employee_id'] ?? 0);
+        if ($eid > 0) {
+            $hasEarning[$eid] = true;
+        }
+    }
+
+    $withRates = [];
+    $missing = [];
+
+    foreach ($employees as $emp) {
+        if (!is_array($emp) || empty($emp['id'])) {
+            continue;
+        }
+
+        // Empty status = treat as Active (old records)
+        $status = $emp['status'] ?? 1;
+        if ($status === '' || $status === null) {
+            $status = 1;
+        }
+
+        // Leave / Inactive: keep history, but do not count as remaining work
+        if ((int) $status !== 1) {
+            continue;
+        }
+
+        $eid = (int) $emp['id'];
+        $rateResult = ride_get_rate_settings_for_week($obj, $eid, $week_year, $week_number);
+        if (!$rateResult) {
+            continue;
+        }
+
+        $item = [
+            'employee_id' => $eid,
+            'name' => $emp['name'] ?? '',
+            'company_name' => $emp['company_name'] ?? '',
+            'employee_status' => (int) $status,
+            'rate_source' => $rateResult['source'] ?? '',
+        ];
+        $withRates[] = $item;
+
+        if (empty($hasEarning[$eid])) {
+            $missing[] = $item;
+        }
+    }
+
+    return [
+        'with_rates' => $withRates,
+        'missing' => $missing,
+        'total_with_rates' => count($withRates),
+        'total_missing' => count($missing),
+    ];
+}
+
 /** Attach vehicle company from week rate settings onto earning rows. */
 function ride_enrich_earnings_with_company($obj, array $earnings)
 {
