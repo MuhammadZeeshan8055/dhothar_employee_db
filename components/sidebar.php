@@ -162,7 +162,7 @@ if ($is_rate_manager) {
                 </a>
                 <ul<?= sidebar_ul_class($show_ridesharing_open) ?>>
                     <li class="<?= sidebar_item_class($current_page, 'ride_sharing_settings') ?>">
-                        <a href="delivery_settings"><span class="title">Rate Settings</span></a>
+                        <a href="ride_sharing_settings"><span class="title">Rate Settings</span></a>
                     </li>
                     <li class="<?= sidebar_item_class($current_page, 'ride_sharing_earnings') ?>">
                         <a href="ride_sharing_earnings"><span class="title">Ride Sharing Earnings</span></a>
