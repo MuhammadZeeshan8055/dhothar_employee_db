@@ -304,6 +304,131 @@ require_once __DIR__ . '/employee_status_helper.php';
 require_once __DIR__ . '/paid_lock_helper.php';
 
 /**
+ * Who still needs rate settings for this week? (Ride sharing)
+ *
+ * Simple rule for beginners:
+ *   - Look at all Active ridesharing employees
+ *   - If they already have a rate row for THIS week → skip them
+ *   - Everyone else goes in the "missing" list
+ *
+ * Important:
+ *   Missing this week does NOT always mean "no rates".
+ *   If they have an older week, the system can still use those rates
+ *   (rate_source = carried). Admin can ignore those.
+ *   If they never had rates (rate_source = none), they must set rates.
+ */
+function ride_missing_exact_rates_for_week($obj, $week_year, $week_number)
+{
+    $week_year = (int) $week_year;
+    $week_number = (int) $week_number;
+
+    // Step 1: all ridesharing employees
+    $obj->select('add_employee_details', '*', null, "work_type = 'ridesharing'", 'name ASC');
+    $employees = $obj->getResult();
+    if (!is_array($employees)) {
+        $employees = [];
+    }
+
+    // Step 2: who already has rates saved for THIS week?
+    $obj->select(
+        'ride_sharing_rate_settings',
+        'employee_id',
+        null,
+        "week_year = {$week_year} AND week_number = {$week_number}"
+    );
+    $exact_rows = $obj->getResult();
+    if (!is_array($exact_rows)) {
+        $exact_rows = [];
+    }
+
+    // Make a simple checklist: employee_id => true
+    $already_saved = [];
+    foreach ($exact_rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $employee_id = 0;
+        if (isset($row['employee_id'])) {
+            $employee_id = (int) $row['employee_id'];
+        }
+
+        if ($employee_id > 0) {
+            $already_saved[$employee_id] = true;
+        }
+    }
+
+    // Step 3: build the missing list
+    $missing = [];
+
+    foreach ($employees as $employee) {
+        if (!is_array($employee)) {
+            continue;
+        }
+
+        if (empty($employee['id'])) {
+            continue;
+        }
+
+        $employee_id = (int) $employee['id'];
+
+        // Only Active people count as "work still to do"
+        $status = 1;
+        if (isset($employee['status']) && $employee['status'] !== '' && $employee['status'] !== null) {
+            $status = $employee['status'];
+        }
+        if ((int) $status !== 1) {
+            continue;
+        }
+
+        // Already has a row for this week → not missing
+        if (isset($already_saved[$employee_id]) && $already_saved[$employee_id] === true) {
+            continue;
+        }
+
+        // Do they have older rates we can carry forward?
+        $rate_result = ride_get_rate_settings_for_week($obj, $employee_id, $week_year, $week_number);
+
+        $rate_source = 'none';
+        $source_year = null;
+        $source_week = null;
+
+        if (is_array($rate_result)) {
+            if (isset($rate_result['source'])) {
+                $rate_source = $rate_result['source'];
+            }
+            if (isset($rate_result['source_year'])) {
+                $source_year = $rate_result['source_year'];
+            }
+            if (isset($rate_result['source_week'])) {
+                $source_week = $rate_result['source_week'];
+            }
+        }
+
+        $name = '';
+        if (isset($employee['name'])) {
+            $name = $employee['name'];
+        }
+
+        $company_name = '';
+        if (isset($employee['company_name'])) {
+            $company_name = $employee['company_name'];
+        }
+
+        $missing[] = [
+            'employee_id' => $employee_id,
+            'name' => $name,
+            'company_name' => $company_name,
+            'rate_source' => $rate_source,
+            'source_year' => $source_year,
+            'source_week' => $source_week,
+        ];
+    }
+
+    return $missing;
+}
+
+/**
  * Remaining earnings for a week (same idea as Delivery).
  *
  * - with_rates = active employees who have rate settings for this week

@@ -2844,20 +2844,26 @@ body:not(.login-page) .modal-header {
   padding: 15px 18px;
   background: linear-gradient(135deg, #254260, #176e91) !important;
   border: 0 !important;
-  color:#fff !important;
+  color: #fff !important;
   border-top-left-radius: 14px;
   border-top-right-radius: 14px;
 }
-h5.modal-title {
-  color: #ffff;
-}
 
+/* Title + close button must be light on the dark header */
+body:not(.login-page) .modal-header .modal-title,
 body:not(.login-page) .modal-header h1,
 body:not(.login-page) .modal-header h2,
 body:not(.login-page) .modal-header h3,
 body:not(.login-page) .modal-header h4,
+body:not(.login-page) .modal-header h5,
 body:not(.login-page) .modal-header .close {
-  color: black !important;
+  color: #fff !important;
+  opacity: 1;
+}
+
+body:not(.login-page) .modal-header .close:hover {
+  color: #fff !important;
+  opacity: 0.8;
 }
 
 body:not(.login-page) .modal-body {

@@ -215,5 +215,10 @@
         });
 
         refreshDateRange();
+
+        // If an employee is already selected (from URL or page), load their rates
+        if ($employee.val()) {
+            loadWeekSettings();
+        }
     });
 })(jQuery);

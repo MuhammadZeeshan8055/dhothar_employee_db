@@ -76,3 +76,51 @@ function employee_status_badge_html($status)
 
     return '';
 }
+
+/**
+ * Short note for the "no rates saved this week" list.
+ *
+ * Simple meanings:
+ *   carried / legacy → older rates exist, admin can ignore if unchanged
+ *   none             → never set rates, admin should set them
+ *
+ * Returns: array with keys "text" and "class"
+ */
+function missing_rate_note($employee)
+{
+    $source = 'none';
+    if (isset($employee['rate_source'])) {
+        $source = $employee['rate_source'];
+    }
+
+    // Older week rates will be used automatically
+    if ($source === 'carried') {
+        $week = 0;
+        $year = 0;
+        if (isset($employee['source_week'])) {
+            $week = (int) $employee['source_week'];
+        }
+        if (isset($employee['source_year'])) {
+            $year = (int) $employee['source_year'];
+        }
+
+        return [
+            'text' => 'Will use Week ' . $week . ' / ' . $year . ' (ignore if unchanged)',
+            'class' => 'text-muted',
+        ];
+    }
+
+    // Old default settings (before weekly tracking)
+    if ($source === 'legacy') {
+        return [
+            'text' => 'Will use default/legacy settings (ignore if unchanged)',
+            'class' => 'text-muted',
+        ];
+    }
+
+    // Never had rates
+    return [
+        'text' => 'No previous rates — please set',
+        'class' => 'text-danger',
+    ];
+}

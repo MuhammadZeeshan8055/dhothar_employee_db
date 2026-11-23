@@ -76,8 +76,6 @@ if (isset($_POST['save_delivery_settings'])) {
 $obj->select('add_employee_details', '*', null, "work_type = 'food_delivery'", 'name ASC');
 $employees = $obj->getResult();
 
-$form_range_label = week_range_label($current_start, $current_end);
-
 $default_filter_year = $current_year;
 $default_filter_week = $current_week - 1;
 if ($default_filter_week < 1) {
@@ -88,6 +86,22 @@ if ($default_filter_week < 1) {
 $filter_year = (isset($_GET['filter_year']) && $_GET['filter_year'] !== '') ? (int) $_GET['filter_year'] : $default_filter_year;
 $filter_week = (isset($_GET['filter_week']) && $_GET['filter_week'] !== '') ? (int) $_GET['filter_week'] : $default_filter_week;
 
+// If URL has employee_id, open the form for that person on the filter week
+// Example: delivery_settings?filter_year=2026&filter_week=47&employee_id=12
+$prefill_employee_id = 0;
+if (isset($_GET['employee_id']) && $_GET['employee_id'] !== '') {
+    $prefill_employee_id = (int) $_GET['employee_id'];
+}
+
+$form_year = $current_year;
+$form_week = $current_week;
+if ($prefill_employee_id > 0) {
+    $form_year = $filter_year;
+    $form_week = $filter_week;
+}
+list($form_start, $form_end) = iso_week_range($form_year, $form_week);
+$form_range_label = week_range_label($form_start, $form_end);
+
 $obj->select(
     'employee_rate_settings',
     'employee_rate_settings.*, add_employee_details.name, add_employee_details.company_name, add_employee_details.status AS employee_status',
@@ -96,6 +110,11 @@ $obj->select(
     'add_employee_details.name ASC, employee_rate_settings.id ASC'
 );
 $savedSettings = $obj->getResult() ?: [];
+
+// Employees with no exact rate row for the selected week (may still use previous week)
+$missingExactRates = delivery_missing_exact_rates_for_week($obj, $filter_year, $filter_week);
+$totalMissingExactRates = count($missingExactRates);
+$totalSavedExactRates = count($savedSettings);
 
 $obj->select(
     'delivery_earnings',
@@ -195,6 +214,37 @@ foreach ($rentByCompany as $group) {
             min-width: 110px;
             margin-right: 8px;
         }
+
+        /* Keep modal on screen: scroll the list inside, not the whole page */
+        #missingRatesModal .modal-dialog {
+            margin: 30px auto;
+            width: 90%;
+            max-width: 900px;
+        }
+
+        #missingRatesModal .modal-body {
+            padding-bottom: 10px;
+        }
+
+        #missingRatesModal .missing-rates-scroll {
+            max-height: 55vh;
+            overflow-y: auto;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid #e3e6ea;
+            border-radius: 4px;
+        }
+
+        #missingRatesModal .missing-rates-scroll .table {
+            margin-bottom: 0;
+        }
+
+        #missingRatesModal .missing-rates-scroll .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #303641;
+        }
     </style>
 </head>
 
@@ -227,7 +277,8 @@ foreach ($rentByCompany as $group) {
                                                     data-allow-clear="true" data-placeholder="Search employee..." required>
                                                     <option value=""></option>
                                                     <?php foreach ($employees as $emp): ?>
-                                                        <option value="<?= (int) $emp['id']; ?>">
+                                                        <option value="<?= (int) $emp['id']; ?>"
+                                                            <?= $prefill_employee_id === (int) $emp['id'] ? 'selected' : ''; ?>>
                                                             <?= htmlspecialchars(($emp['name'] ?? '') . ' - ' . ($emp['company_name'] ?? '') . ' - ' . ($emp['type_of_contract'] ?? '') . employee_status_option_suffix($emp['status'] ?? 1)); ?>
                                                         </option>
                                                     <?php endforeach; ?>
@@ -239,21 +290,21 @@ foreach ($rentByCompany as $group) {
                                             <div class="col-md-2">
                                                 <label class="control-label">Year</label>
                                                 <select name="week_year" id="week_year" class="form-control" required>
-                                                    <?= year_options_html($current_year, $current_year); ?>
+                                                    <?= year_options_html($form_year, $current_year); ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="control-label">Week</label>
                                                 <select name="week_number" id="week_number" class="form-control" required>
-                                                    <?= week_options_html($current_week, $current_year); ?>
+                                                    <?= week_options_html($form_week, $form_year); ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="control-label">Date Range</label>
                                                 <input type="text" id="week_date_range" class="form-control calc-readonly"
                                                     value="<?= htmlspecialchars($form_range_label); ?>" readonly>
-                                                <input type="hidden" name="week_start" id="week_start" value="<?= htmlspecialchars($current_start); ?>">
-                                                <input type="hidden" name="week_end" id="week_end" value="<?= htmlspecialchars($current_end); ?>">
+                                                <input type="hidden" name="week_start" id="week_start" value="<?= htmlspecialchars($form_start); ?>">
+                                                <input type="hidden" name="week_end" id="week_end" value="<?= htmlspecialchars($form_end); ?>">
                                             </div>
                                         </div>
 
@@ -348,6 +399,106 @@ foreach ($rentByCompany as $group) {
                                     </select>
                                     <button type="submit" class="btn btn-primary btn-sm">Show</button>
                                 </form>
+
+                                <div class="row" style="display:flex;justify-content:center;flex-wrap:wrap;margin:15px 0 10px;">
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="tile-stats tile-green">
+                                            <div class="icon"><i class="entypo-chart-bar"></i></div>
+                                            <div class="num"><?= $totalSavedExactRates; ?></div>
+                                            <h3>Rates Saved — Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?></h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <a href="#missingRatesModal" data-toggle="modal" style="display:block;color:inherit;">
+                                            <div class="tile-stats tile-orange" style="cursor:pointer;">
+                                                <div class="icon"><i class="entypo-users"></i></div>
+                                                <div class="num"><?= $totalMissingExactRates; ?></div>
+                                                <h3>No Rates Saved — Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?></h3>
+                                                <p style="margin:8px 0 0;color:inherit;opacity:0.75;">Click to view employees</p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="missingRatesModal" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                <h4 class="modal-title">
+                                                    No Rate Settings Saved — Week <?= (int) $filter_week; ?> / <?= (int) $filter_year; ?>
+                                                </h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- <div class="alert alert-info" style="margin-bottom:15px;">
+                                                    Ignore this list if you want the <strong>same rates as the previous week</strong> —
+                                                    the system will keep using those automatically.
+                                                    Only set rates when something changed, or when an employee has never had rates.
+                                                </div> -->
+                                                <?php if (empty($missingExactRates)): ?>
+                                                    <div class="alert alert-success" style="margin-bottom:0;">
+                                                        Every active delivery employee has rate settings saved for this week.
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="missing-rates-scroll">
+                                                        <table class="table table-bordered table-striped">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>#</th>
+                                                                    <th>Employee</th>
+                                                                    <th>Company</th>
+                                                                    <th>Note</th>
+                                                                    <th>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($missingExactRates as $index => $employee): ?>
+                                                                    <?php
+                                                                    // Simple note: ignore if previous week rates are OK
+                                                                    $note = missing_rate_note($employee);
+                                                                    $employee_id = 0;
+                                                                    if (isset($employee['employee_id'])) {
+                                                                        $employee_id = (int) $employee['employee_id'];
+                                                                    }
+                                                                    $employee_name = '';
+                                                                    if (isset($employee['name'])) {
+                                                                        $employee_name = $employee['name'];
+                                                                    }
+                                                                    $company_name = '';
+                                                                    if (isset($employee['company_name'])) {
+                                                                        $company_name = $employee['company_name'];
+                                                                    }
+                                                                    ?>
+                                                                    <tr>
+                                                                        <td><?= $index + 1; ?></td>
+                                                                        <td><?= htmlspecialchars($employee_name); ?></td>
+                                                                        <td><?= htmlspecialchars($company_name); ?></td>
+                                                                        <td class="<?= htmlspecialchars($note['class']); ?>">
+                                                                            <?= htmlspecialchars($note['text']); ?>
+                                                                        </td>
+                                                                        <td>
+                                                                            <button type="button"
+                                                                                class="btn btn-success btn-xs edit-settings-btn"
+                                                                                data-dismiss="modal"
+                                                                                data-employee-id="<?= $employee_id; ?>"
+                                                                                data-week-year="<?= (int) $filter_year; ?>"
+                                                                                data-week-number="<?= (int) $filter_week; ?>">
+                                                                                Set Rates
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <table class="table table-bordered datatable table-3" id="settings-table">
                                     <thead>
