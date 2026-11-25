@@ -1,10 +1,11 @@
 <?php
 
 /**
- * Auth + roles (3 only):
- * Super Admin  - all pages, can edit/delete/unlock paid earnings
- * Admin        - all pages, paid earnings locked
- * Rate Manager - delivery_settings only
+ * Auth + roles:
+ * Super Admin      - all pages, can edit/delete/unlock paid earnings
+ * Admin            - all pages, paid earnings locked
+ * Rate Manager     - delivery_settings only
+ * Employee Manager - add/manage employees only
  */
 
 function isLoggedIn()
@@ -33,9 +34,22 @@ function isRateManager()
     return getUserRole() === 'Rate Manager';
 }
 
+function isEmployeeManager()
+{
+    return getUserRole() === 'Employee Manager';
+}
+
 function getHomePage()
 {
-    return isRateManager() ? 'delivery_settings' : 'index';
+    if (isRateManager()) {
+        return 'delivery_settings';
+    }
+
+    if (isEmployeeManager()) {
+        return 'manage_employee';
+    }
+
+    return 'index';
 }
 
 function setAuthUser(array $user)
@@ -107,6 +121,25 @@ function requirePageAccess()
         }
 
         header('Location: ' . $GLOBALS['base_url'] . 'delivery_settings');
+        exit;
+    }
+
+    // Employee Manager: only employee pages (+ ajax they need)
+    if (isEmployeeManager() && !in_array($page, [
+        'add_employee',
+        'manage_employee',
+        'employee_edit',
+        'check_passport',
+        'delete_employee',
+    ], true)) {
+        if (isAjaxRequest()) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied.']);
+            exit;
+        }
+
+        header('Location: ' . $GLOBALS['base_url'] . 'manage_employee');
         exit;
     }
 }

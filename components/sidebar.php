@@ -23,6 +23,7 @@ $show_ridesharing_open = in_array($current_page, $ridesharing_pages, true);
 $show_attendance_open = in_array($current_page, $attendance_pages, true);
 $is_dashboard = ($current_page === 'index');
 $is_rate_manager = isRateManager();
+$is_employee_manager = isEmployeeManager();
 
 // Small helpers so the HTML below stays easy to read
 if (!function_exists('sidebar_parent_class')) {
@@ -61,10 +62,12 @@ if ($current_page === 'manage_employee' || $current_page === 'employee_edit') {
     $manage_employee_active = 'active';
 }
 
-// Logo goes to dashboard, or rate settings for Rate Manager
+// Logo: dashboard, rate settings, or manage employees
 $logo_link = 'index';
 if ($is_rate_manager) {
     $logo_link = 'delivery_settings';
+} elseif ($is_employee_manager) {
+    $logo_link = 'manage_employee';
 }
 ?>
 <script src="<?= $base_url ?>assets/js/dhothar-theme.js" defer></script>
@@ -94,6 +97,24 @@ if ($is_rate_manager) {
                     <i class="entypo-cog"></i>
                     <span class="title">Delivery Rate Settings</span>
                 </a>
+            </li>
+
+        <?php elseif ($is_employee_manager): ?>
+
+            <!-- Employees only -->
+            <li class="<?= sidebar_parent_class($show_employee_open) ?>">
+                <a href="manage_employee">
+                    <i class="entypo-users"></i>
+                    <span class="title">Employees</span>
+                </a>
+                <ul<?= sidebar_ul_class($show_employee_open) ?>>
+                    <li class="<?= sidebar_item_class($current_page, 'add_employee') ?>">
+                        <a href="add_employee"><span class="title">Add Employee</span></a>
+                    </li>
+                    <li class="<?= $manage_employee_active ?>">
+                        <a href="manage_employee"><span class="title">Manage Employees</span></a>
+                    </li>
+                </ul>
             </li>
 
         <?php else: ?>
