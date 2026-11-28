@@ -11,6 +11,7 @@
 include('session.php');
 include('database.php');
 include('includes/ride_sharing_helper.php');
+include('includes/digital_sign_helper.php');
 
 $obj = new Database();
 
@@ -253,6 +254,15 @@ foreach ($earnings as $row) {
 
         .earning-locked-label {
             font-size: 11px;
+        }
+
+        .earning-sign-cell .sign-thumb {
+            max-width: 120px;
+            max-height: 48px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            object-fit: contain;
         }
 
         .deduction-label {
@@ -578,6 +588,7 @@ foreach ($earnings as $row) {
                         <th>Prev Adjust</th>
                         <th>Total Balance</th>
                         <th>Status</th>
+                        <th>Signature</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -634,17 +645,11 @@ foreach ($earnings as $row) {
                                 <td class="earning-status-cell">
                                     <strong><?= $isPaid ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'; ?></strong>
                                 </td>
+                                <td class="earning-sign-cell">
+                                    <?= digital_sign_cell_html($base_url, 'ride', $row['id'], $row['signature_image'] ?? ''); ?>
+                                </td>
                                 <td>
                                     <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                                        <?php
-                                        $signUrl = $base_url . 'digital_sign?type=ride&id=' . (int) $row['id'];
-                                        if (!$isPaid && !$rowLocked):
-                                        ?>
-                                            <a href="<?= htmlspecialchars($signUrl) ?>" class="btn btn-success btn-sm digital-sign-btn" target="_blank">Sign</a>
-                                        <?php elseif ($isPaid && !empty($row['signature_image'])): ?>
-                                            <a href="<?= htmlspecialchars($signUrl) ?>" class="btn btn-info btn-sm digital-sign-btn" target="_blank">View Sign</a>
-                                        <?php endif; ?>
-
                                         <?php if ($rowLocked): ?>
                                             <span class="label label-success earning-locked-label">
                                                 <i class="entypo-lock"></i> Locked<?= $isPaid ? '' : ' (later week paid)' ?>
@@ -777,16 +782,18 @@ foreach ($earnings as $row) {
                 $row.find('.earning-status-cell strong').html(label);
             }
 
-            // Sign = unpaid, View Sign = paid with signature
+            // Sign button HTML for the Signature column
             function signButtonHtml(id) {
                 var url = '<?= $base_url ?>digital_sign?type=ride&id=' + id;
-                return '<a href="' + url + '" class="btn btn-success btn-sm digital-sign-btn" target="_blank">Sign</a>';
+                return '<a href="' + url + '" class="btn btn-success btn-xs digital-sign-btn" target="_blank">Sign</a>';
             }
 
+            // After Mark as Paid
             function lockRow($row) {
+                var id = $row.find('.earning-checkbox').val();
+
                 $row.addClass('earning-row-paid');
                 $row.find('.earning-checkbox').prop('checked', false);
-                $row.find('.digital-sign-btn').remove();
 
                 if (!CAN_UNLOCK_PAID) {
                     $row.find('.earning-checkbox').prop('disabled', true);
@@ -798,21 +805,16 @@ foreach ($earnings as $row) {
                 }
 
                 setRowStatus($row, 1);
+                $row.find('.earning-sign-cell').html(signButtonHtml(id));
             }
 
+            // After Mark as Unpaid (signature cleared on server)
             function unlockRow($row) {
                 var id = $row.find('.earning-checkbox').val();
 
                 $row.removeClass('earning-row-paid');
                 $row.find('.earning-checkbox').prop('disabled', false);
-                $row.find('.digital-sign-btn').remove();
-
-                // Back to unpaid — show Sign again
-                var $box = $row.find('td:last > div');
-                if ($box.length) {
-                    $box.prepend(signButtonHtml(id) + ' ');
-                }
-
+                $row.find('.earning-sign-cell').html(signButtonHtml(id));
                 setRowStatus($row, 0);
             }
 

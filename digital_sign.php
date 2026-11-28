@@ -1,10 +1,18 @@
 <?php
+/**
+ * Digital Sign page
+ * Shows payment info + signature pad (or saved signature image).
+ * Open with: digital_sign?type=delivery&id=123
+ *            digital_sign?type=ride&id=456
+ */
+
 include('session.php');
 include('database.php');
 include('includes/digital_sign_helper.php');
 
 $obj = new Database();
 
+// ---- Read URL params ----
 $type = trim($_GET['type'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
 
@@ -29,16 +37,13 @@ if ($error === '' && $id <= 0) {
     $error = 'Missing record id.';
 }
 
-// Load earning + employee name
+// ---- Load earning + employee name ----
 if ($error === '') {
-    $obj->select(
-        $table,
-        $table . '.*, add_employee_details.name',
-        'LEFT JOIN add_employee_details ON add_employee_details.id = ' . $table . '.employee_id',
-        $table . '.id = ' . $id,
-        null,
-        1
-    );
+    $join = 'LEFT JOIN add_employee_details ON add_employee_details.id = ' . $table . '.employee_id';
+    $columns = $table . '.*, add_employee_details.name';
+    $where = $table . '.id = ' . $id;
+
+    $obj->select($table, $columns, $join, $where, null, 1);
     $result = $obj->getResult();
 
     if (empty($result[0]['id'])) {
@@ -48,10 +53,10 @@ if ($error === '') {
     }
 }
 
+// ---- Prepare display values ----
 $employee_name = '';
 $signature_file = '';
 $already_signed = false;
-$is_paid = false;
 $amount = 0;
 $week_label = '';
 $date_range = '';
@@ -60,22 +65,16 @@ if ($row) {
     $employee_name = $row['name'] ?? '';
     $signature_file = trim($row['signature_image'] ?? '');
     $already_signed = ($signature_file !== '');
-    $is_paid = ((int) ($row['status'] ?? 0) === 1);
     $amount = (float) ($row['total_balance'] ?? 0);
     $week_label = 'Week ' . (int) ($row['week_number'] ?? 0) . ' / ' . (int) ($row['week_year'] ?? 0);
 
     if (!empty($row['week_start']) && !empty($row['week_end'])) {
         $date_range = formatDate($row['week_start']) . ' to ' . formatDate($row['week_end']);
     }
-
-    // Already paid with no signature — nothing to sign here
-    if ($is_paid && !$already_signed) {
-        $error = 'This week is already paid.';
-    }
 }
 
-// Sign when unpaid (saving will mark it Paid)
-$can_sign = ($error === '' && $row && !$already_signed && !$is_paid);
+// Can draw a new signature only if not signed yet
+$can_sign = ($error === '' && $row && !$already_signed);
 
 ?>
 <!DOCTYPE html>
@@ -156,6 +155,7 @@ $can_sign = ($error === '' && $row && !$already_signed && !$is_paid);
 
 <?php if ($can_sign): ?>
 <script>
+// Simple signature pad (mouse + finger)
 var canvas = document.getElementById('signCanvas');
 var ctx = canvas.getContext('2d');
 var drawing = false;
@@ -166,20 +166,23 @@ ctx.lineWidth = 2.5;
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
 
-// Get x,y on canvas (works for mouse + finger)
+// Get x,y on the canvas (works for mouse and touch)
 function getPos(e) {
     var rect = canvas.getBoundingClientRect();
-    var x = e.clientX;
-    var y = e.clientY;
+    var clientX;
+    var clientY;
 
-    if (e.touches && e.touches.length > 0) {
-        x = e.touches[0].clientX;
-        y = e.touches[0].clientY;
+    if (e.touches && e.touches.length) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
     }
 
     return {
-        x: (x - rect.left) * (canvas.width / rect.width),
-        y: (y - rect.top) * (canvas.height / rect.height)
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
     };
 }
 
@@ -192,7 +195,9 @@ function startDraw(e) {
 }
 
 function moveDraw(e) {
-    if (!drawing) return;
+    if (!drawing) {
+        return;
+    }
     e.preventDefault();
     var pos = getPos(e);
     ctx.lineTo(pos.x, pos.y);
@@ -201,20 +206,22 @@ function moveDraw(e) {
 }
 
 function endDraw(e) {
+    if (!drawing) {
+        return;
+    }
     e.preventDefault();
     drawing = false;
 }
 
-// Mouse
 canvas.addEventListener('mousedown', startDraw);
 canvas.addEventListener('mousemove', moveDraw);
 canvas.addEventListener('mouseup', endDraw);
 canvas.addEventListener('mouseleave', endDraw);
 
-// Touch (phone)
 canvas.addEventListener('touchstart', startDraw, { passive: false });
 canvas.addEventListener('touchmove', moveDraw, { passive: false });
 canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener('touchcancel', endDraw);
 
 document.getElementById('clearBtn').onclick = function () {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -246,7 +253,7 @@ document.getElementById('confirmBtn').onclick = function () {
     .then(function (res) { return res.json(); })
     .then(function (data) {
         if (data && data.success) {
-            showMsg(data.message || 'Signature saved. Marked as Paid.', false);
+            showMsg(data.message || 'Signature saved.', false);
             setTimeout(function () { window.location.reload(); }, 800);
             return;
         }
@@ -264,17 +271,18 @@ document.getElementById('confirmBtn').onclick = function () {
 
 function showMsg(text, isError, hide) {
     var el = document.getElementById('statusMsg');
+
     if (hide || text === '') {
         el.style.display = 'none';
         el.innerHTML = '';
         return;
     }
+
     el.style.display = 'block';
     el.className = 'msg ' + (isError ? 'msg-error' : 'msg-ok');
     el.innerHTML = text;
 }
 </script>
 <?php endif; ?>
-<script src="<?= $base_url ?>assets/js/dhothar-theme.js"></script>
 </body>
 </html>
