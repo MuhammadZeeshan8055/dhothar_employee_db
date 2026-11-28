@@ -3,6 +3,7 @@
 include('../session.php');
 include('../database.php');
 include('../includes/ride_sharing_helper.php');
+include('../includes/digital_sign_helper.php');
 
 $obj = new Database();
 
@@ -17,7 +18,7 @@ if ($idList === '') {
 
 $obj->select(
     'ride_sharing_earnings',
-    'id, employee_id, week_year, week_number',
+    'id, employee_id, week_year, week_number, signature_image',
     null,
     "id IN ($idList)",
     'week_year ASC, week_number ASC, id ASC'
@@ -25,14 +26,28 @@ $obj->select(
 $affected = $obj->getResult();
 
 if ($status === 1) {
+    // Mark as Paid
     $update = $obj->update('ride_sharing_earnings', ['status' => 1], "id IN ($idList) AND status != 1");
 } else {
+    // Mark as Unpaid — Super Admin only
     if (!isSuperAdmin()) {
         echo 'denied';
         exit;
     }
 
-    $update = $obj->update('ride_sharing_earnings', ['status' => 0], "id IN ($idList) AND status = 1");
+    // Remove signature files + clear columns
+    digital_sign_delete_files($affected);
+
+    $update = $obj->update(
+        'ride_sharing_earnings',
+        [
+            'status' => 0,
+            'signature_image' => '',
+            'signed_at' => '',
+            'signed_by' => 0,
+        ],
+        "id IN ($idList) AND status = 1"
+    );
 }
 
 if ($update && !empty($affected) && !empty($affected[0]['id'])) {

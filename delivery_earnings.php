@@ -700,12 +700,21 @@ $form_range_label = week_range_label($current_start, $current_end);
                                     <strong><?= $isPaid ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'; ?></strong>
                                 </td>
                                 <td>
-                                    <?php if ($rowLocked): ?>
-                                        <span class="label label-success earning-locked-label">
-                                            <i class="entypo-lock"></i> Locked<?= $isPaid ? '' : ' (later week paid)' ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                        <?php
+                                        $signUrl = $base_url . 'digital_sign?type=delivery&id=' . (int) $row['id'];
+                                        if (!$isPaid && !$rowLocked):
+                                        ?>
+                                            <a href="<?= htmlspecialchars($signUrl) ?>" class="btn btn-success btn-sm digital-sign-btn" target="_blank">Sign</a>
+                                        <?php elseif ($isPaid && !empty($row['signature_image'])): ?>
+                                            <a href="<?= htmlspecialchars($signUrl) ?>" class="btn btn-info btn-sm digital-sign-btn" target="_blank">View Sign</a>
+                                        <?php endif; ?>
+
+                                        <?php if ($rowLocked): ?>
+                                            <span class="label label-success earning-locked-label">
+                                                <i class="entypo-lock"></i> Locked<?= $isPaid ? '' : ' (later week paid)' ?>
+                                            </span>
+                                        <?php else: ?>
                                             <button type="button" class="btn btn-primary btn-sm edit-earning-btn"
                                                 data-employee-id="<?= (int) ($row['employee_id'] ?? 0); ?>"
                                                 data-week-year="<?= (int) ($row['week_year'] ?? 0); ?>"
@@ -716,8 +725,8 @@ $form_range_label = week_range_label($current_start, $current_end);
                                                 data-id="<?= (int) $row['id']; ?>">
                                                 <span class="entypo-trash"></span> Delete
                                             </button>
-                                        </div>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                             <?php
@@ -832,21 +841,42 @@ $form_range_label = week_range_label($current_start, $current_end);
                 $row.find('.earning-status-cell strong').html(label);
             }
 
+            // Sign = unpaid, View Sign = paid with signature
+            function signButtonHtml(id) {
+                var url = '<?= $base_url ?>digital_sign?type=delivery&id=' + id;
+                return '<a href="' + url + '" class="btn btn-success btn-sm digital-sign-btn" target="_blank">Sign</a>';
+            }
+
             function lockRow($row) {
                 $row.addClass('earning-row-paid');
                 $row.find('.earning-checkbox').prop('checked', false);
+                $row.find('.digital-sign-btn').remove();
+
                 if (!CAN_UNLOCK_PAID) {
                     $row.find('.earning-checkbox').prop('disabled', true);
                     $row.find('td:last').html(
-                        '<span class="label label-success earning-locked-label"><i class="entypo-lock"></i> Locked</span>'
+                        '<div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">' +
+                        '<span class="label label-success earning-locked-label"><i class="entypo-lock"></i> Locked</span>' +
+                        '</div>'
                     );
                 }
+
                 setRowStatus($row, 1);
             }
 
             function unlockRow($row) {
+                var id = $row.find('.earning-checkbox').val();
+
                 $row.removeClass('earning-row-paid');
                 $row.find('.earning-checkbox').prop('disabled', false);
+                $row.find('.digital-sign-btn').remove();
+
+                // Back to unpaid — show Sign again
+                var $box = $row.find('td:last > div');
+                if ($box.length) {
+                    $box.prepend(signButtonHtml(id) + ' ');
+                }
+
                 setRowStatus($row, 0);
             }
 
